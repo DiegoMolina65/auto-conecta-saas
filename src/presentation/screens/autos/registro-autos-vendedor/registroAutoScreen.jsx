@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../../shared/components/Button.jsx";
 import { Input } from "../../../../shared/components/Input.jsx";
+import { Select } from "../../../../shared/components/Select.jsx";
 import { Alert, useAlert } from "../../../../shared/components/Alert.jsx";
+import { listasSelect } from "../../../../shared/helpers/listOptionSelect.js";
+import { Spinner } from "../../../../shared/components/Spinner.jsx";
 
 import { AutoEntidad } from "../../../../domain/entities/AutoEntidad.js";
 import { crearAuto } from "../../../../insfrastructure/services/autoServicio.js";
@@ -29,8 +32,9 @@ export default function RegistroAuto() {
     vin: "",
     condicion: "Usado",
     descripcion: "",
+    ciudad: "",
     caracteristicas: [],
-    imagenes: []
+    imagenes: [],
   });
 
   const [errores, setErrores] = useState({});
@@ -38,70 +42,123 @@ export default function RegistroAuto() {
   const [caracteristicaTemp, setCaracteristicaTemp] = useState("");
   const [imagenesSeleccionadas, setImagenesSeleccionadas] = useState([]);
 
-  // Opciones para selects
-  const opcionesMoneda = ["USD", "BOB"];
-  const opcionesCombustible = ["Gasolina", "Diesel", "Gas", "Híbrido", "Eléctrico"];
-  const opcionesTransmision = ["Manual", "Automática", "CVT"];
-  const opcionesCondicion = ["Nuevo", "Usado", "Seminuevo"];
+  // Filtrar modelos basándose en la marca seleccionada
+  const modelosFiltrados = useMemo(() => {
+    if (!datosFormulario.marca) {
+      return [];
+    }
+    return listasSelect.modelo.filter(
+      (modelo) => modelo.marca === datosFormulario.marca
+    );
+  }, [datosFormulario.marca]);
 
-  const manejarCambioInput = (campo) => (evento) => {
-    const valor = evento.target.value;
-    setDatosFormulario((anterior) => ({
-      ...anterior,
-      [campo]: valor
-    }));
+  const manejarCambioInput = (campo) => (eventoOrOpcion) => {
+    let valor = "";
+
+    // Si es un objeto con .value
+    if (
+      eventoOrOpcion &&
+      typeof eventoOrOpcion === "object" &&
+      "value" in eventoOrOpcion
+    ) {
+      valor = eventoOrOpcion.value ?? "";
+    }
+    // Si es un evento de input
+    else if (
+      eventoOrOpcion &&
+      eventoOrOpcion.target &&
+      "value" in eventoOrOpcion.target
+    ) {
+      valor = eventoOrOpcion.target.value;
+    } else {
+      valor = "";
+    }
+
+    setDatosFormulario((anterior) => {
+      const nuevoDatos = {
+        ...anterior,
+        [campo]: valor,
+      };
+
+      // Si se cambia la marca, resetear el modelo
+      if (campo === "marca") {
+        nuevoDatos.modelo = "";
+      }
+
+      return nuevoDatos;
+    });
+
     if (errores[campo]) {
       setErrores((anterior) => ({
         ...anterior,
-        [campo]: ""
+        [campo]: "",
       }));
     }
   };
 
   const manejarCambioImagenes = (evento) => {
     const archivosSeleccionados = Array.from(evento.target.files);
-    
+
     // Verificar si al agregar estas imágenes se supera el límite
-    const totalImagenes = imagenesSeleccionadas.length + archivosSeleccionados.length;
+    const totalImagenes =
+      imagenesSeleccionadas.length + archivosSeleccionados.length;
     if (totalImagenes > 5) {
-      error("Límite de imágenes", `Solo puedes tener máximo 5 imágenes. Ya tienes ${imagenesSeleccionadas.length}, puedes agregar ${5 - imagenesSeleccionadas.length} más.`);
+      error(
+        "Límite de imágenes",
+        `Solo puedes tener máximo 5 imágenes. Ya tienes ${
+          imagenesSeleccionadas.length
+        }, puedes agregar ${5 - imagenesSeleccionadas.length} más.`
+      );
       // Limpiar el input
-      evento.target.value = '';
+      evento.target.value = "";
       return;
     }
-    
+
     // Validar tipos de archivo
-    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const archivosValidos = archivosSeleccionados.filter(archivo => 
+    const tiposPermitidos = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+    ];
+    const archivosValidos = archivosSeleccionados.filter((archivo) =>
       tiposPermitidos.includes(archivo.type)
     );
-    
+
     if (archivosValidos.length !== archivosSeleccionados.length) {
-      error("Formato inválido", "Solo se permiten imágenes en formato JPG, PNG o WebP");
-      evento.target.value = '';
+      error(
+        "Formato inválido",
+        "Solo se permiten imágenes en formato JPG, PNG o WebP"
+      );
+      evento.target.value = "";
       return;
     }
-    
+
     // Validar tamaño (máximo 5MB por imagen)
-    const archivosConTamanoValido = archivosValidos.filter(archivo => 
-      archivo.size <= 5 * 1024 * 1024 // 5MB
+    const archivosConTamanoValido = archivosValidos.filter(
+      (archivo) => archivo.size <= 5 * 1024 * 1024 // 5MB
     );
-    
+
     if (archivosConTamanoValido.length !== archivosValidos.length) {
       error("Archivo muy grande", "Cada imagen debe pesar menos de 5MB");
-      evento.target.value = '';
+      evento.target.value = "";
       return;
     }
-    
+
     // Agregar las nuevas imágenes a las existentes (no reemplazar)
-    setImagenesSeleccionadas(anterior => [...anterior, ...archivosConTamanoValido]);
-    
+    setImagenesSeleccionadas((anterior) => [
+      ...anterior,
+      ...archivosConTamanoValido,
+    ]);
+
     // Limpiar el input para permitir seleccionar los mismos archivos nuevamente si es necesario
-    evento.target.value = '';
+    evento.target.value = "";
   };
 
   const eliminarImagen = (index) => {
-    setImagenesSeleccionadas(anterior => anterior.filter((_, i) => i !== index));
+    setImagenesSeleccionadas((anterior) =>
+      anterior.filter((_, i) => i !== index)
+    );
   };
 
   const agregarCaracteristica = () => {
@@ -109,7 +166,7 @@ export default function RegistroAuto() {
     if (valor && !datosFormulario.caracteristicas.includes(valor)) {
       setDatosFormulario((anterior) => ({
         ...anterior,
-        caracteristicas: [...anterior.caracteristicas, valor]
+        caracteristicas: [...anterior.caracteristicas, valor],
       }));
       setCaracteristicaTemp("");
     }
@@ -118,23 +175,34 @@ export default function RegistroAuto() {
   const eliminarCaracteristica = (index) => {
     setDatosFormulario((anterior) => ({
       ...anterior,
-      caracteristicas: anterior.caracteristicas.filter((_, i) => i !== index)
+      caracteristicas: anterior.caracteristicas.filter((_, i) => i !== index),
     }));
   };
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    if (!datosFormulario.marca.trim()) nuevosErrores.marca = "La marca es requerida";
-    if (!datosFormulario.modelo.trim()) nuevosErrores.modelo = "El modelo es requerido";
+    if (!datosFormulario.marca.trim())
+      nuevosErrores.marca = "La marca es requerida";
+    if (!datosFormulario.modelo.trim())
+      nuevosErrores.modelo = "El modelo es requerido";
     if (!datosFormulario.ano) nuevosErrores.ano = "El año es requerido";
-    else if (datosFormulario.ano < 1900 || datosFormulario.ano > new Date().getFullYear() + 1)
+    else if (
+      datosFormulario.ano < 1900 ||
+      datosFormulario.ano > new Date().getFullYear() + 1
+    )
       nuevosErrores.ano = "El año no es válido";
-    if (!datosFormulario.precio) nuevosErrores.precio = "El precio es requerido";
-    else if (datosFormulario.precio <= 0) nuevosErrores.precio = "El precio debe ser mayor a 0";
-    if (!datosFormulario.kilometraje) nuevosErrores.kilometraje = "El kilometraje es requerido";
-    else if (datosFormulario.kilometraje < 0) nuevosErrores.kilometraje = "El kilometraje no puede ser negativo";
-    if (!datosFormulario.colorExterior.trim()) nuevosErrores.colorExterior = "El color exterior es requerido";
-    if (!datosFormulario.motor.trim()) nuevosErrores.motor = "La información del motor es requerida";
+    if (!datosFormulario.precio)
+      nuevosErrores.precio = "El precio es requerido";
+    else if (datosFormulario.precio <= 0)
+      nuevosErrores.precio = "El precio debe ser mayor a 0";
+    if (!datosFormulario.kilometraje)
+      nuevosErrores.kilometraje = "El kilometraje es requerido";
+    else if (datosFormulario.kilometraje < 0)
+      nuevosErrores.kilometraje = "El kilometraje no puede ser negativo";
+    if (!datosFormulario.colorExterior.trim())
+      nuevosErrores.colorExterior = "El color exterior es requerido";
+    if (!datosFormulario.motor.trim())
+      nuevosErrores.motor = "La información del motor es requerida";
 
     return nuevosErrores;
   };
@@ -151,15 +219,18 @@ export default function RegistroAuto() {
     setEstaCargando(true);
 
     try {
-        const auth = getAuth();
-        const usuarioLogueado = auth.currentUser;
-        if (!usuarioLogueado) {
-            error("No estás autenticado", "Por favor inicia sesión para registrar un vehículo");
-            setEstaCargando(false);
-            return;
-        }
+      const auth = getAuth();
+      const usuarioLogueado = auth.currentUser;
+      if (!usuarioLogueado) {
+        error(
+          "No estás autenticado",
+          "Por favor inicia sesión para registrar un vehículo"
+        );
+        setEstaCargando(false);
+        return;
+      }
 
-        datosFormulario.vendedorId = usuarioLogueado.uid;
+      datosFormulario.vendedorId = usuarioLogueado.uid;
 
       // Subir imágenes a Cloudinary usando servicio externo
       let urlsImagenes = [];
@@ -197,8 +268,9 @@ export default function RegistroAuto() {
         vin: "",
         condicion: "Usado",
         descripcion: "",
+        ciudad: "",
         caracteristicas: [],
-        imagenes: []
+        imagenes: [],
       });
 
       setErrores({});
@@ -209,7 +281,6 @@ export default function RegistroAuto() {
         //TODO: Cambiar a donde va redirigir después de registrar
         navigate("/registro-auto");
       }, 1500);
-
     } catch (err) {
       console.error(err);
       error("Error al registrar", "No se pudo registrar el vehículo");
@@ -227,7 +298,6 @@ export default function RegistroAuto() {
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-secondary opacity-10 rounded-full blur-xl"></div>
 
       <div className="relative max-w-6xl w-full mx-auto bg-white rounded-2xl shadow-2xl border border-gray-100 backdrop-blur-sm">
-
         {/* Header */}
         <div className="bg-gradient-to-r from-gray-800 to-white text-white p-6 rounded-t-2xl">
           <div className="flex items-center space-x-4">
@@ -236,24 +306,88 @@ export default function RegistroAuto() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Registrar Vehículo</h1>
-              <p className="text-gray-300 text-sm">Publica tu auto en AutoConecta</p>
+              <p className="text-gray-300 text-sm">
+                Publica tu auto en AutoConecta
+              </p>
             </div>
           </div>
         </div>
 
         <form onSubmit={manejarRegistro} className="p-8">
-
           {/* Información Básica */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-black mb-4 flex items-center">
-              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">1</span>
+              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                1
+              </span>
               Información Básica
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Input label="Marca" placeholder="Toyota, Honda, etc." valor={datosFormulario.marca} onChange={manejarCambioInput("marca")} error={errores.marca} icon="🏭" size="md" />
-              <Input label="Modelo" placeholder="Corolla, Civic, etc." valor={datosFormulario.modelo} onChange={manejarCambioInput("modelo")} error={errores.modelo} icon="🚙" size="md" />
-              <Input label="Versión" placeholder="XLE, Sport, etc." valor={datosFormulario.version} onChange={manejarCambioInput("version")} error={errores.version} icon="⭐" size="md" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Marca
+                </label>
+                <Select
+                  value={datosFormulario.marca}
+                  onChange={manejarCambioInput("marca")}
+                  options={listasSelect.marca}
+                  placeholder="Selecciona una marca"
+                  variant="primary"
+                  size="md"
+                  error={errores.marca}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Modelo
+                </label>
+                <Select
+                  value={datosFormulario.modelo}
+                  onChange={manejarCambioInput("modelo")}
+                  options={modelosFiltrados}
+                  placeholder={
+                    datosFormulario.marca
+                      ? "Selecciona un modelo"
+                      : "Primero selecciona una marca"
+                  }
+                  variant="primary"
+                  size="md"
+                  error={errores.modelo}
+                  disabled={!datosFormulario.marca}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Versión
+                </label>
+                <Select
+                  value={datosFormulario.version}
+                  onChange={manejarCambioInput("version")}
+                  options={listasSelect.version}
+                  placeholder="Selecciona una versión"
+                  variant="primary"
+                  size="md"
+                  error={errores.version}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Ciudad
+                </label>
+                <Select
+                  value={datosFormulario.ciudad}
+                  onChange={manejarCambioInput("ciudad")}
+                  options={listasSelect.ciudad}
+                  placeholder="Selecciona una ciudad"
+                  variant="primary"
+                  size="md"
+                  error={errores.ciudad}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
@@ -282,16 +416,17 @@ export default function RegistroAuto() {
                 step="0.01"
               />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
-                <select
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Moneda
+                </label>
+                <Select
                   value={datosFormulario.moneda}
                   onChange={manejarCambioInput("moneda")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
-                >
-                  {opcionesMoneda.map(moneda => (
-                    <option key={moneda} value={moneda}>{moneda}</option>
-                  ))}
-                </select>
+                  options={listasSelect.moneda}
+                  placeholder="Selecciona una moneda"
+                  variant="primary"
+                  size="md"
+                />
               </div>
               <Input
                 label="Kilometraje"
@@ -310,36 +445,56 @@ export default function RegistroAuto() {
           {/* Características Físicas */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-black mb-4 flex items-center">
-              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">2</span>
+              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                2
+              </span>
               Características Físicas
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Input label="Color Exterior" placeholder="Blanco, Negro, etc." valor={datosFormulario.colorExterior} onChange={manejarCambioInput("colorExterior")} error={errores.colorExterior} icon="🎨" size="md" />
-              <Input label="Color Interior" placeholder="Gris, Beige, etc." valor={datosFormulario.colorInterior} onChange={manejarCambioInput("colorInterior")} error={errores.colorInterior} icon="🪑" size="md" />
+              <Input
+                label="Color Exterior"
+                placeholder="Blanco, Negro, etc."
+                valor={datosFormulario.colorExterior}
+                onChange={manejarCambioInput("colorExterior")}
+                error={errores.colorExterior}
+                icon="🎨"
+                size="md"
+              />
+              <Input
+                label="Color Interior"
+                placeholder="Gris, Beige, etc."
+                valor={datosFormulario.colorInterior}
+                onChange={manejarCambioInput("colorInterior")}
+                error={errores.colorInterior}
+                icon="🪑"
+                size="md"
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Combustible</label>
-                <select
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Combustible
+                </label>
+                <Select
                   value={datosFormulario.tipoCombustible}
                   onChange={manejarCambioInput("tipoCombustible")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
-                >
-                  {opcionesCombustible.map(combustible => (
-                    <option key={combustible} value={combustible}>{combustible}</option>
-                  ))}
-                </select>
+                  options={listasSelect.combustible}
+                  placeholder="Selecciona una moneda"
+                  variant="primary"
+                  size="md"
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Transmisión</label>
-                <select
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Transmisión
+                </label>
+                <Select
                   value={datosFormulario.transmision}
                   onChange={manejarCambioInput("transmision")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
-                >
-                  {opcionesTransmision.map(transmision => (
-                    <option key={transmision} value={transmision}>{transmision}</option>
-                  ))}
-                </select>
+                  options={listasSelect.transmision}
+                  placeholder="Selecciona una transmisión"
+                  variant="primary"
+                  size="md"
+                />
               </div>
             </div>
           </div>
@@ -347,24 +502,43 @@ export default function RegistroAuto() {
           {/* Detalles Técnicos */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-black mb-4 flex items-center">
-              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">3</span>
+              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                3
+              </span>
               Detalles Técnicos
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Input label="Motor" placeholder="1.8L 4 cilindros" valor={datosFormulario.motor} onChange={manejarCambioInput("motor")} error={errores.motor} icon="⚙️" size="md" />
-              <Input label="VIN (Opcional)" placeholder="Número de identificación" valor={datosFormulario.vin} onChange={manejarCambioInput("vin")} error={errores.vin} icon="🔢" size="md" />
+              <Input
+                label="Motor"
+                placeholder="1.8L 4 cilindros"
+                valor={datosFormulario.motor}
+                onChange={manejarCambioInput("motor")}
+                error={errores.motor}
+                icon="⚙️"
+                size="md"
+              />
+              <Input
+                label="VIN (Opcional)"
+                placeholder="Número de identificación"
+                valor={datosFormulario.vin}
+                onChange={manejarCambioInput("vin")}
+                error={errores.vin}
+                icon="🔢"
+                size="md"
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Condición</label>
-                <select
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Condición
+                </label>
+                <Select
                   value={datosFormulario.condicion}
                   onChange={manejarCambioInput("condicion")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
-                >
-                  {opcionesCondicion.map(condicion => (
-                    <option key={condicion} value={condicion}>{condicion}</option>
-                  ))}
-                </select>
+                  options={listasSelect.condicion}
+                  placeholder="Selecciona una condición"
+                  variant="primary"
+                  size="md"
+                />
               </div>
             </div>
           </div>
@@ -372,13 +546,17 @@ export default function RegistroAuto() {
           {/* Descripción y Características */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-black mb-4 flex items-center">
-              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">4</span>
+              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                4
+              </span>
               Descripción y Características
             </h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descripción
+                </label>
                 <textarea
                   value={datosFormulario.descripcion}
                   onChange={manejarCambioInput("descripcion")}
@@ -389,7 +567,9 @@ export default function RegistroAuto() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Características Adicionales</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Características Adicionales
+                </label>
                 <div className="flex space-x-2 mb-3">
                   <input
                     type="text"
@@ -397,7 +577,10 @@ export default function RegistroAuto() {
                     onChange={(e) => setCaracteristicaTemp(e.target.value)}
                     placeholder="Aire acondicionado, GPS, etc."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), agregarCaracteristica())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" &&
+                      (e.preventDefault(), agregarCaracteristica())
+                    }
                   />
                   <Button
                     type="button"
@@ -412,21 +595,23 @@ export default function RegistroAuto() {
 
                 {datosFormulario.caracteristicas.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {datosFormulario.caracteristicas.map((caracteristica, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center bg-tertiary text-primary px-3 py-1 rounded-full text-sm"
-                      >
-                        {caracteristica}
-                        <button
-                          type="button"
-                          onClick={() => eliminarCaracteristica(index)}
-                          className="ml-2 text-secondary hover:text-red-700"
+                    {datosFormulario.caracteristicas.map(
+                      (caracteristica, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center bg-tertiary text-primary px-3 py-1 rounded-full text-sm"
                         >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                          {caracteristica}
+                          <button
+                            type="button"
+                            onClick={() => eliminarCaracteristica(index)}
+                            className="ml-2 text-secondary hover:text-red-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )
+                    )}
                   </div>
                 )}
               </div>
@@ -436,7 +621,9 @@ export default function RegistroAuto() {
           {/* Subir imágenes */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-black mb-4 flex items-center">
-              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">5</span>
+              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                5
+              </span>
               Imágenes ({imagenesSeleccionadas.length}/5)
             </h2>
 
@@ -455,12 +642,13 @@ export default function RegistroAuto() {
                                hover:file:bg-secondary/80
                                cursor-pointer"
                   />
-                  
+
                   <p className="text-sm text-gray-500">
-                    {imagenesSeleccionadas.length === 0 
+                    {imagenesSeleccionadas.length === 0
                       ? "Puedes seleccionar hasta 5 imágenes. Formatos: JPG, PNG, WebP. Máximo 5MB por imagen."
-                      : `Puedes agregar ${5 - imagenesSeleccionadas.length} imágenes más. Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.`
-                    }
+                      : `Puedes agregar ${
+                          5 - imagenesSeleccionadas.length
+                        } imágenes más. Formatos: JPG, PNG, WebP. Máximo 5MB por imagen.`}
                   </p>
                 </>
               )}
@@ -468,7 +656,8 @@ export default function RegistroAuto() {
               {imagenesSeleccionadas.length === 5 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <p className="text-sm text-green-700">
-                    ✅ Has alcanzado el límite de 5 imágenes. Si deseas cambiar alguna, elimínala primero.
+                    ✅ Has alcanzado el límite de 5 imágenes. Si deseas cambiar
+                    alguna, elimínala primero.
                   </p>
                 </div>
               )}
@@ -476,7 +665,9 @@ export default function RegistroAuto() {
               {imagenesSeleccionadas.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-700">Imágenes seleccionadas:</h3>
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Imágenes seleccionadas:
+                    </h3>
                     {imagenesSeleccionadas.length > 1 && (
                       <button
                         type="button"
@@ -487,7 +678,7 @@ export default function RegistroAuto() {
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {imagenesSeleccionadas.map((img, idx) => (
                       <div key={idx} className="relative group">
@@ -506,7 +697,10 @@ export default function RegistroAuto() {
                         >
                           ×
                         </button>
-                        <p className="text-xs text-gray-500 mt-1 truncate" title={img.name}>
+                        <p
+                          className="text-xs text-gray-500 mt-1 truncate"
+                          title={img.name}
+                        >
                           {img.name}
                         </p>
                       </div>
@@ -536,17 +730,13 @@ export default function RegistroAuto() {
               disabled={estaCargando}
             >
               {estaCargando ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Publicando...</span>
-                </div>
+                <Spinner />
               ) : (
                 "Publicar vehículo"
               )}
             </Button>
           </div>
         </form>
-
       </div>
 
       {/* Renderizar alerts - Corregido siguiendo el patrón de Login */}

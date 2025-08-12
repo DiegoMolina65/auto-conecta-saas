@@ -6,6 +6,8 @@ export class UsuarioEntidad {
     carnetDeIdentidad,
     numeroDeTelefono,
     correoElectronico,
+    role,
+    estadoUsuario,
   }) {
     this.uid = uid || null;
     this.nombres = nombres;
@@ -13,6 +15,8 @@ export class UsuarioEntidad {
     this.carnetDeIdentidad = carnetDeIdentidad;
     this.numeroDeTelefono = numeroDeTelefono;
     this.correoElectronico = correoElectronico;
+    this.role = role;
+    this.estadoUsuario = estadoUsuario;
   }
 
   toFirestore() {
@@ -23,7 +27,8 @@ export class UsuarioEntidad {
       carnetDeIdentidad: this.carnetDeIdentidad,
       numeroDeTelefono: this.numeroDeTelefono,
       correoElectronico: this.correoElectronico,
-      role: "usuario", // Role por defecto
+      role: this.role,
+      estadoUsuario: this.estadoUsuario,
       creadoEn: new Date(),
     };
   }

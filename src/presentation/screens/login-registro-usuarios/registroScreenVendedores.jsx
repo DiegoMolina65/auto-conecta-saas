@@ -7,7 +7,8 @@ import { Alert, useAlert } from "../../../shared/components/Alert.jsx";
 
 import { registrarUsuario } from "../../../insfrastructure/services/autentificacionServicio.js";
 
-export default function Registro() {
+
+export default function RegistroVendedores() {
   const navigate = useNavigate(); 
   const [datosFormulario, setDatosFormulario] = useState({
     nombres: "",
@@ -15,7 +16,9 @@ export default function Registro() {
     carnetDeIdentidad: "",
     numeroDeTelefono: "",
     correoElectronico: "",
-    contrasena: ""
+    contrasena: "",
+    estadoUsuario: "activo",
+    role: "vendedor"
   });
 
   const [errores, setErrores] = useState({});
@@ -46,6 +49,9 @@ export default function Registro() {
     }
     if (!datosFormulario.apellidos.trim()) {
       nuevosErrores.apellidos = "Los apellidos son requeridos";
+    }
+    if(!datosFormulario.role.trim()){
+      nuevosErrores.role = "El rol es requerido";
     }
     if (!datosFormulario.carnetDeIdentidad.trim()) {
       nuevosErrores.carnetDeIdentidad = "El carnet de identidad es requerido";
@@ -122,10 +128,10 @@ export default function Registro() {
               <span className="text-2xl text-black font-bold">AutoConecta</span>
             </div>
             <h1 className="text-2xl font-bold text-primary mb-1">
-              Crea tu cuenta
+              Crea cuenta de Vendedor
             </h1>
             <p className="text-gray-600 text-sm">
-              Regístrate para comenzar a usar AutoConecta
+              Regístra para comenzar a vender autos en AutoConecta
             </p>
           </div>
 
@@ -209,6 +215,8 @@ export default function Registro() {
                 {mostrarContrasena ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
+            
+            
 
             {/* Quinta fila: Botón de registro */}
             <div className="pt-4">
@@ -225,30 +233,16 @@ export default function Registro() {
                     <span>Registrando...</span>
                   </div>
                 ) : (
-                  "Crear cuenta"
+                  "Crear cuenta de Vendedor"
                 )}
               </Button>
             </div>
-          </div>
-
-          {/* Enlace a login */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              ¿Ya tienes cuenta?{" "}
-              <button
-                className="font-semibold text-secondary hover:text-red-900 transition-colors"
-                type="button"
-                onClick={manejarIrLogin}
-              >
-                Inicia sesión aquí
-              </button>
-            </p>
           </div>
         </form>
 
         {/* Texto del pie */}
         <p className="text-center text-xs text-gray-500 mt-4">
-          Al registrarte, aceptas nuestros términos y condiciones
+          Al registrar una cuenta, aceptas nuestros Términos y Condiciones
         </p>
       </div>
 

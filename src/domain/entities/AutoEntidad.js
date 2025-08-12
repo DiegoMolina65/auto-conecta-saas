@@ -20,7 +20,8 @@ export class AutoEntidad {
     caracteristicas = [],
     fechaPublicacion,
     estadoPublicacion,
-    vendedorId
+    vendedorId,
+    ciudad,
   }) {
     this.id = id;
     this.marca = marca;
@@ -43,6 +44,7 @@ export class AutoEntidad {
     this.fechaPublicacion = fechaPublicacion ? new Date(fechaPublicacion) : null;
     this.estadoPublicacion = estadoPublicacion;
     this.vendedorId = vendedorId;
+    this.ciudad = ciudad;
   }
 
   toFirestore() {
@@ -66,7 +68,8 @@ export class AutoEntidad {
       caracteristicas: this.caracteristicas,
       fechaPublicacion: this.fechaPublicacion ? this.fechaPublicacion.toISOString() : null,
       estadoPublicacion: "activo", // estado por defecto
-      vendedorId: this.vendedorId
+      vendedorId: this.vendedorId,
+      ciudad: this.ciudad
     };
   }
 }

@@ -1,5 +1,5 @@
 import { createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, getFirestore } from "firebase/firestore";
 import { authService, databaseFirestore } from "./firebase_config.js";
 import { UsuarioEntidad } from "../../domain/entities/UsuarioEntidad.js"
 
@@ -42,6 +42,21 @@ export async function iniciarSesion(datos) {
     correoElectronico,
     contrasena,
   );
+
+  // Obtener datos del usuario desde Firestore
+  const usuarioRef = doc(databaseFirestore, "usuarios", credenciales.user.uid);
+  const usuarioSnap = await getDoc(usuarioRef);
+
+  if (!usuarioSnap.exists()) {
+    throw new Error("Datos de usuario no encontrados en Firestore.");
+  }
+
+  const usuarioData = usuarioSnap.data();
+
+  // Verificar el estado del usuario
+  if (usuarioData.estadoUsuario === "inactivo") {
+    throw new Error("Tu cuenta está inactiva. Por favor, contacta al soporte.");
+  }
 
   return credenciales.user;
 }

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 import { Button } from "../../../shared/components/Button.jsx";
 import { Input } from "../../../shared/components/Input.jsx";
 import { Alert, useAlert } from "../../../shared/components/Alert.jsx";
 
 import { iniciarSesion } from "../../../insfrastructure/services/autentificacionServicio.js";
+import { databaseFirestore } from "../../../insfrastructure/services/firebase_config.js";
 
 export default function Login() {
   const navigate = useNavigate(); 
@@ -65,16 +67,29 @@ export default function Login() {
     setEstaCargando(true);
 
     try {
-      // Función para iniciar sesión
-      const usuario = await iniciarSesion({
+      const userCredential = await iniciarSesion({
         correoElectronico: datosFormulario.correo,
         contrasena: datosFormulario.contrasena,
       });
 
-      exito("Login exitoso", `Bienvenido, ${usuario.displayName || usuario.email}`);
+      const user = userCredential;
 
-      // Redirigir al dashboard
-      navigate("/registro-auto"); 
+      // Obtener el rol del usuario desde Firestore
+      const userDocRef = doc(databaseFirestore, "usuarios", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        exito("Login exitoso", `Bienvenido, ${userData.nombres || user.email}`);
+
+        if (userData.role === "admin") {
+          navigate("/dashboard");
+        } else {
+          navigate("/autos-registrados-por-vendedor"); 
+        }
+      } else {
+        error("Error de autenticación", "No se encontraron datos de usuario.");
+      }
 
     } catch (err) {
       error("Error de autenticación", err.message || "No se pudo iniciar sesión");
@@ -91,7 +106,7 @@ export default function Login() {
 
   const manejarRegistro = () => {
     // Redirigir a la pantalla de registro
-    navigate("/registro");
+    navigate("/registro-usuario");
   }
 
   return (
