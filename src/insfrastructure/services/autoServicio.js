@@ -1,4 +1,4 @@
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { databaseFirestore } from "./firebase_config.js";
 
 // Crear un nuevo auto
@@ -28,6 +28,33 @@ export async function getAutoById(idAuto) {
     throw error;
   }
 }
+
+// Obtener todos los autos
+export async function obtenerTodosLosAutos() {
+    try {
+        const autosCollection = collection(databaseFirestore, 'autos');
+        const q = query(autosCollection, orderBy('fechaPublicacion', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error obteniendo todos los autos:", error);
+        throw error;
+    }
+}
+
+// Obtener autos recientes
+export async function obtenerAutosRecientes(limite = 5) {
+    try {
+        const autosCollection = collection(databaseFirestore, 'autos');
+        const q = query(autosCollection, orderBy('fechaPublicacion', 'desc'), limit(limite));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error obteniendo autos recientes:", error);
+        throw error;
+    }
+}
+
 
 // Editar un auto existente
 export async function editarAuto(idAuto, datosActualizados) {

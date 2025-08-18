@@ -62,7 +62,7 @@ export default function EditarAutoScreen() {
           setImagenesExistentes(auto.imagenes || []);
         } else {
           error("Error", "No se encontró el auto para editar.");
-          navigate("/autos-registrados-por-vendedor");
+          navigate("/dashboard/autos-registrados-por-vendedor-logueado");
         }
       } catch (err) {
         console.error(err);
@@ -270,7 +270,8 @@ export default function EditarAutoScreen() {
         precio: parseFloat(datosFormulario.precio),
         kilometraje: parseInt(datosFormulario.kilometraje),
         imagenes: imagenesFinales,
-        vendedorId: usuarioLogueado.uid,
+        // No sobrescribir vendedorId, ya viene en datosFormulario
+        // vendedorId: usuarioLogueado.uid,
       }).toFirestore();
 
       await editarAuto(autoId, datosParaActualizar);
@@ -278,7 +279,7 @@ export default function EditarAutoScreen() {
       exito("Auto actualizado", "El vehículo ha sido actualizado exitosamente");
 
       setTimeout(() => {
-        navigate("/autos-registrados-por-vendedor");
+        navigate("/dashboard/autos-registrados-por-vendedor-logueado");
       }, 1500);
     } catch (err) {
       console.error(err);
@@ -294,7 +295,7 @@ export default function EditarAutoScreen() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-tertiary to-orange-100 px-4 py-8">
-      <div className="absolute inset-0 bg-gradient-to-br from-tertiary via-white to-orange-100"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-tertiary via-white to-orange-100 -z-10"></div>
 
       <div className="absolute top-20 left-10 w-20 h-20 bg-primary opacity-10 rounded-full blur-xl"></div>
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-secondary opacity-10 rounded-full blur-xl"></div>
@@ -306,7 +307,7 @@ export default function EditarAutoScreen() {
               <span className="text-2xl">✏️</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Editar Vehículo</h1>
+              <h1 className="text-2xl font-bold">Editar auto</h1>
               <p className="text-gray-300 text-sm">
                 Actualiza la información de tu auto
               </p>
@@ -724,7 +725,7 @@ export default function EditarAutoScreen() {
                   <span>Actualizando...</span>
                 </div>
               ) : (
-                "Actualizar vehículo"
+                "Actualizar auto"
               )}
             </Button>
           </div>

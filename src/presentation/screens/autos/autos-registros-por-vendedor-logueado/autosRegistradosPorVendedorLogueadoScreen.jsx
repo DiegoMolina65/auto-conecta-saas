@@ -4,11 +4,12 @@ import { getFirestore, collection, query, where, getDocs, orderBy } from 'fireba
 
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '../../../../shared/components/Button';
+import { Button } from '../../../../shared/components/Button.jsx';
 import { Alert, useAlert } from '../../../../shared/components/Alert.jsx';
 import { useConfirm } from '../../../../shared/components/Confirm.jsx';
 import { formatearPrecio, formatearKilometraje } from '../../../../shared/helpers/formatHelpers.js';
 import { Spinner } from '../../../../shared/components/Spinner.jsx';
+import Search from '../../../../shared/components/Search.jsx';
 
 import { eliminarAuto } from '../../../../insfrastructure/services/autoServicio.js';
 
@@ -45,11 +46,12 @@ const AutoCard = ({ auto, onEditar, onEliminar }) => {
   );
 };
 
-export default function AutosRegistradosPorVendedor() {
+export default function AutosRegistradosPorVendedorLogueado() {
   const [autos, setAutos] = useState([]);
   const [estaCargando, setEstaCargando] = useState(true);
   const [error, setError] = useState(null);
   const [usuario, setUsuario] = useState(null);
+  const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const navigate = useNavigate();
 
   // Hook para alertas
@@ -92,7 +94,7 @@ export default function AutosRegistradosPorVendedor() {
 
   // Función para editar un auto
   const handleEditar = (id) => {
-    navigate(`/editar-auto/${id}`);
+    navigate(`/dashboard/editar-auto/${id}`);
   };
 
   // Función para eliminar un auto
@@ -125,6 +127,12 @@ export default function AutosRegistradosPorVendedor() {
     }
   };
 
+  const autosFiltrados = autos.filter(auto =>
+    auto.marca.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+    auto.modelo.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+    auto.ciudad.toLowerCase().includes(terminoBusqueda.toLowerCase())
+  );
+
   const renderContent = () => {
     if (estaCargando) {
       return <Spinner />;
@@ -143,18 +151,27 @@ export default function AutosRegistradosPorVendedor() {
       );
     }
 
+    if (autosFiltrados.length === 0 && terminoBusqueda) {
+      return (
+        <div className="text-center bg-white p-8 rounded-lg shadow-md">
+          <p className="text-gray-700 text-lg mb-4">No se encontraron vehículos que coincidan con tu búsqueda.</p>
+          <Button onClick={() => setTerminoBusqueda('')}>Limpiar búsqueda</Button>
+        </div>
+      );
+    }
+
     if (autos.length === 0) {
       return (
         <div className="text-center bg-white p-8 rounded-lg shadow-md">
           <p className="text-gray-700 text-lg mb-4">Aún no has registrado ningún vehículo.</p>
-          <Button onClick={() => navigate('/registro-auto')}>Registrar mi primer auto</Button>
+          <Button onClick={() => navigate('/dashboard/registro-auto')}>Registrar mi primer auto</Button>
         </div>
       );
     }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {autos.map(auto => (
+        {autosFiltrados.map(auto => (
           <AutoCard 
             key={auto.id} 
             auto={auto} 
@@ -173,15 +190,24 @@ export default function AutosRegistradosPorVendedor() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-primary">Mis Vehículos Publicados</h1>
-            <p className="text-gray-500 mt-1">Administra los vehículos que has puesto en venta.</p>
+            <h1 className="text-3xl font-bold text-primary">Mis autos publicados</h1>
+            <p className="text-gray-500 mt-1">Administra los autos que has puesto en venta.</p>
           </div>
           <Button
             variant="success" 
             size="md"  
-            onClick={() => navigate('/registro-auto')}>+ Registrar Nuevo
+            onClick={() => navigate('/dashboard/registro-auto')}>+ Registrar Nuevo
           </Button>
         </div>
+
+        <div className="mb-6">
+          <Search 
+            value={terminoBusqueda}
+            onChange={setTerminoBusqueda}
+            placeholder="Buscar por marca, modelo o ciudad..."
+          />
+        </div>
+
         {renderContent()}
       </div>
 

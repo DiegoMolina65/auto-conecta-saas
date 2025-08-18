@@ -85,7 +85,7 @@ export default function Login() {
         if (userData.role === "admin") {
           navigate("/dashboard");
         } else {
-          navigate("/autos-registrados-por-vendedor"); 
+          navigate("/dashboard/autos-registrados-por-vendedor-logueado"); 
         }
       } else {
         error("Error de autenticación", "No se encontraron datos de usuario.");

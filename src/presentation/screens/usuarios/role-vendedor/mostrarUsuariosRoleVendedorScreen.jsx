@@ -9,7 +9,7 @@ import Search from '../../../../shared/components/Search.jsx';
 import perfilImage from '../../../../assets/imgperfil.png';
 
 // Card para mostrar cada vendedor
-const VendedorCard = ({ usuario, onEditar, onEliminar }) => {
+const VendedorCard = ({ usuario, onEditar, onEliminar, onVerAutos }) => {
   const { nombres, apellidos, correoElectronico, carnetDeIdentidad, numeroDeTelefono, role, estadoUsuario, id } = usuario;
 
   return (
@@ -37,6 +37,7 @@ const VendedorCard = ({ usuario, onEditar, onEliminar }) => {
         <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between space-x-2">
           <Button variant="edit" size="sm" onClick={() => onEditar(id)}>Editar</Button>
           <Button variant="secondary" size="sm" onClick={() => onEliminar(id, nombres, apellidos)}>Eliminar</Button>
+          <Button variant="info" size="sm" onClick={() => onVerAutos(id)}>Ver Autos</Button>
         </div>
       </div>
     </div>
@@ -73,7 +74,7 @@ export default function MostrarUsuariosRoleVendedor() {
 
   // Función para editar un vendedor
   const handleEditar = (id) => {
-    navigate(`/editar-usuario/${id}`);
+    navigate(`/dashboard/editar-usuario/${id}`);
   };
 
   // Función para eliminar un vendedor
@@ -104,6 +105,11 @@ export default function MostrarUsuariosRoleVendedor() {
         "Ocurrió un error al eliminar el vendedor. Por favor, intenta nuevamente."
       );
     }
+  };
+
+  // Función para ver los autos de un vendedor
+  const handleVerAutos = (id) => {
+    navigate(`/dashboard/autos-vendedor/${id}`);
   };
 
   const usuariosFiltrados = usuarios.filter(usuario =>
@@ -142,6 +148,7 @@ export default function MostrarUsuariosRoleVendedor() {
             usuario={usuario} 
             onEditar={handleEditar}
             onEliminar={handleEliminar}
+            onVerAutos={handleVerAutos}
           />
         ))}
       </div>
@@ -155,7 +162,7 @@ export default function MostrarUsuariosRoleVendedor() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-primary">Vendedores Registrados</h1>
+            <h1 className="text-3xl font-bold text-primary">Vendedores registrados</h1>
             <p className="text-gray-500 mt-1">Administra los usuarios con rol de vendedor en el sistema.</p>
           </div>
         </div>

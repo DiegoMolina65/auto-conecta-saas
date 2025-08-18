@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { getAuth } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../../shared/components/Button.jsx";
@@ -11,8 +11,9 @@ import { Spinner } from "../../../../shared/components/Spinner.jsx";
 import { AutoEntidad } from "../../../../domain/entities/AutoEntidad.js";
 import { crearAuto } from "../../../../insfrastructure/services/autoServicio.js";
 import { subirVariasImagenes } from "../../../../insfrastructure/services/cloudinary-imagenes/CloudinaryService.js";
+import { obtenerUsuariosPorRole } from "../../../../insfrastructure/services/usuarioServicio.js";
 
-export default function RegistroAuto() {
+export default function RegistroAutoAdminScreen() {
   const navigate = useNavigate();
   const { alerts, exito, error, cerrarAlert } = useAlert();
 
@@ -35,12 +36,31 @@ export default function RegistroAuto() {
     ciudad: "",
     caracteristicas: [],
     imagenes: [],
+    vendedorId: "", // Nuevo campo para el ID del vendedor
   });
 
   const [errores, setErrores] = useState({});
   const [estaCargando, setEstaCargando] = useState(false);
   const [caracteristicaTemp, setCaracteristicaTemp] = useState("");
   const [imagenesSeleccionadas, setImagenesSeleccionadas] = useState([]);
+  const [vendedores, setVendedores] = useState([]); // Estado para la lista de vendedores
+  const [cargandoVendedores, setCargandoVendedores] = useState(true); // Estado de carga para vendedores
+
+  // Cargar vendedores al montar el componente
+  useEffect(() => {
+    const cargarVendedores = async () => {
+      try {
+        const vendedoresData = await obtenerUsuariosPorRole("vendedor");
+        setVendedores(vendedoresData.map(v => ({ value: v.id, label: `${v.nombres} ${v.apellidos}` })));
+      } catch (err) {
+        console.error("Error al cargar vendedores:", err);
+        error("Error", "No se pudieron cargar los vendedores.");
+      } finally {
+        setCargandoVendedores(false);
+      }
+    };
+    cargarVendedores();
+  }, []);
 
   // Filtrar modelos basándose en la marca seleccionada
   const modelosFiltrados = useMemo(() => {
@@ -203,6 +223,8 @@ export default function RegistroAuto() {
       nuevosErrores.colorExterior = "El color exterior es requerido";
     if (!datosFormulario.motor.trim())
       nuevosErrores.motor = "La información del motor es requerida";
+    if (!datosFormulario.vendedorId.trim())
+      nuevosErrores.vendedorId = "Debe seleccionar un vendedor";
 
     return nuevosErrores;
   };
@@ -219,18 +241,19 @@ export default function RegistroAuto() {
     setEstaCargando(true);
 
     try {
-      const auth = getAuth();
-      const usuarioLogueado = auth.currentUser;
-      if (!usuarioLogueado) {
-        error(
-          "No estás autenticado",
-          "Por favor inicia sesión para registrar un vehículo"
-        );
-        setEstaCargando(false);
-        return;
-      }
+      // El vendedorId ya viene del formulario, no del usuario logueado
+      // const auth = getAuth();
+      // const usuarioLogueado = auth.currentUser;
+      // if (!usuarioLogueado) {
+      //   error(
+      //     "No estás autenticado",
+      //     "Por favor inicia sesión para registrar un vehículo"
+      //   );
+      //   setEstaCargando(false);
+      //   return;
+      // }
 
-      datosFormulario.vendedorId = usuarioLogueado.uid;
+      // datosFormulario.vendedorId = usuarioLogueado.uid; // Esto se reemplaza por el campo de selección
 
       // Subir imágenes a Cloudinary usando servicio externo
       let urlsImagenes = [];
@@ -271,6 +294,7 @@ export default function RegistroAuto() {
         ciudad: "",
         caracteristicas: [],
         imagenes: [],
+        vendedorId: "",
       });
 
       setErrores({});
@@ -279,7 +303,7 @@ export default function RegistroAuto() {
 
       // No redirigir, mantener en la pantalla y limpiar campos
       // setTimeout(() => {
-      //   navigate("/autos-registrados-por-vendedor-logueado");
+      //   navigate("/dashboard-admin"); // Redirigir al dashboard del admin
       // }, 1500);
     } catch (err) {
       console.error(err);
@@ -305,9 +329,9 @@ export default function RegistroAuto() {
               <span className="text-2xl">🚗</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Registrar auto</h1>
+              <h1 className="text-2xl font-bold">Registrar auto para vendedor</h1>
               <p className="text-gray-300 text-sm">
-                Publica tu auto en AutoConecta
+                Publica un auto y asignalo a un vendedor
               </p>
             </div>
           </div>
@@ -324,6 +348,26 @@ export default function RegistroAuto() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Campo para seleccionar vendedor */}
+              <div>
+                <label className="block mb-1 font-medium text-gray-700">
+                  Asignar a Vendedor
+                </label>
+                {cargandoVendedores ? (
+                  <Spinner />
+                ) : (
+                  <Select
+                    value={datosFormulario.vendedorId}
+                    onChange={manejarCambioInput("vendedorId")}
+                    options={vendedores}
+                    placeholder="Selecciona un vendedor"
+                    variant="primary"
+                    size="md"
+                    error={errores.vendedorId}
+                  />
+                )}
+              </div>
+
               <div>
                 <label className="block mb-1 font-medium text-gray-700">
                   Marca
@@ -371,21 +415,6 @@ export default function RegistroAuto() {
                   variant="primary"
                   size="md"
                   error={errores.version}
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 font-medium text-gray-700">
-                  Ciudad
-                </label>
-                <Select
-                  value={datosFormulario.ciudad}
-                  onChange={manejarCambioInput("ciudad")}
-                  options={listasSelect.ciudad}
-                  placeholder="Selecciona una ciudad"
-                  variant="primary"
-                  size="md"
-                  error={errores.ciudad}
                 />
               </div>
             </div>

@@ -127,7 +127,7 @@ export default function EditarUsuario() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-tertiary to-orange-100 px-4 py-8">
-      <div className="absolute inset-0 bg-gradient-to-br from-tertiary via-white to-orange-100"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-tertiary via-white to-orange-100 -z-10"></div>
 
       <div className="absolute top-20 left-10 w-20 h-20 bg-primary opacity-10 rounded-full blur-xl"></div>
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-secondary opacity-10 rounded-full blur-xl"></div>

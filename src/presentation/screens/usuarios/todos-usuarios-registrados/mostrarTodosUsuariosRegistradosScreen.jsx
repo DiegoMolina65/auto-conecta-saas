@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { obtenerUsuariosPorRole, eliminarUsuario } from '../../../../insfrastructure/services/usuarioServicio.js';
+import { obtenerTodosLosUsuarios, eliminarUsuario } from '../../../../insfrastructure/services/usuarioServicio.js';
 import { Spinner } from '../../../../shared/components/Spinner.jsx';
 import { Button } from '../../../../shared/components/Button.jsx';
 import { useConfirm } from '../../../../shared/components/Confirm.jsx';
@@ -15,7 +15,7 @@ const UsuarioCard = ({ usuario, onEditar, onEliminar }) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 border border-gray-100">
       <div className="relative">
-        <div className="w-full h-48 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="w-full h-48 bg-gradient-to-br from-purple-50 to-blue-100 flex items-center justify-center">
           <img 
             src={perfilImage} 
             alt={`${nombres} ${apellidos}`} 
@@ -43,7 +43,7 @@ const UsuarioCard = ({ usuario, onEditar, onEliminar }) => {
   );
 };
 
-export default function MostrarUsuariosRoleUsuario() {
+export default function MostrarTodosUsuariosRegistrados() {
   const [usuarios, setUsuarios] = useState([]);
   const [estaCargando, setEstaCargando] = useState(true);
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
@@ -59,7 +59,7 @@ export default function MostrarUsuariosRoleUsuario() {
     const fetchUsuarios = async () => {
       try {
         setEstaCargando(true);
-        const usuariosData = await obtenerUsuariosPorRole('usuario');
+        const usuariosData = await obtenerTodosLosUsuarios();
         setUsuarios(usuariosData);
       } catch (error) {
         alertaError('Error de carga', 'No se pudieron cargar los usuarios. Inténtalo de nuevo más tarde.');
@@ -109,7 +109,8 @@ export default function MostrarUsuariosRoleUsuario() {
   const usuariosFiltrados = usuarios.filter(usuario =>
     usuario.nombres.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
     usuario.apellidos.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
-    usuario.correoElectronico.toLowerCase().includes(terminoBusqueda.toLowerCase())
+    usuario.correoElectronico.toLowerCase().includes(terminoBusqueda.toLowerCase()) ||
+    usuario.role.toLowerCase().includes(terminoBusqueda.toLowerCase())
   );
 
   const renderContent = () => {
@@ -129,7 +130,7 @@ export default function MostrarUsuariosRoleUsuario() {
     if (usuarios.length === 0) {
       return (
         <div className="text-center bg-white p-8 rounded-lg shadow-md">
-          <p className="text-gray-700 text-lg mb-4">No hay usuarios registrados con rol de usuario.</p>
+          <p className="text-gray-700 text-lg mb-4">No hay usuarios registrados en el sistema.</p>
         </div>
       );
     }
@@ -155,8 +156,8 @@ export default function MostrarUsuariosRoleUsuario() {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-primary">Usuarios registrados</h1>
-            <p className="text-gray-500 mt-1">Administra los usuarios con rol de usuario en el sistema.</p>
+            <h1 className="text-3xl font-bold text-primary">Todos los usuarios registrados</h1>
+            <p className="text-gray-500 mt-1">Administra todos los usuarios del sistema, sin importar su rol.</p>
           </div>
         </div>
 
@@ -164,7 +165,7 @@ export default function MostrarUsuariosRoleUsuario() {
           <Search 
             value={terminoBusqueda}
             onChange={setTerminoBusqueda}
-            placeholder="Buscar por nombre, apellido o correo electrónico..."
+            placeholder="Buscar por nombre, apellido, correo electrónico o rol..."
           />
         </div>
 

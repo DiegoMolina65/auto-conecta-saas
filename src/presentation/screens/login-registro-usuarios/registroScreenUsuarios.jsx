@@ -5,7 +5,7 @@ import { Button } from "../../../shared/components/Button.jsx";
 import { Input } from "../../../shared/components/Input.jsx";
 import { Alert, useAlert } from "../../../shared/components/Alert.jsx";
 
-import { registrarUsuario } from "../../../insfrastructure/services/autentificacionServicio.js";
+import { registrarUsuarioDesdeAdmin } from "../../../insfrastructure/services/autentificacionServicio.js";
 
 export default function RegistroUsuarios() {
   const navigate = useNavigate(); 
@@ -85,13 +85,13 @@ export default function RegistroUsuarios() {
     setEstaCargando(true);
 
     try {
-      const usuarioRegistrado = await registrarUsuario(datosFormulario);
+      const usuarioRegistrado = await registrarUsuarioDesdeAdmin(datosFormulario);
 
-      exito("Registro exitoso", "Tu cuenta ha sido creada correctamente");
+      exito("Registro exitoso", "La cuenta ha sido creada correctamente");
 
       // Redirigir al login después de un breve mensaje
       setTimeout(() => {
-        navigate("/login");
+        navigate(-1);
       }, 1500);
     } catch (err) {
       console.error(err);
@@ -108,7 +108,7 @@ export default function RegistroUsuarios() {
   return (
     <div className="min-h-screen flex flex-col justify-center bg-gradient-to-br from-tertiary to-orange-100 px-4 py-8">
 
-      <div className="absolute inset-0 bg-gradient-to-br from-tertiary via-white to-orange-100"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-tertiary via-white to-orange-100 -z-10"></div>
 
       {/* Elementos decorativos */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-primary opacity-10 rounded-full blur-xl"></div>
