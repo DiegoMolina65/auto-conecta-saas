@@ -6,44 +6,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../../shared/components/Button.jsx';
 import { Alert, useAlert } from '../../../../shared/components/Alert.jsx';
 import { useConfirm } from '../../../../shared/components/Confirm.jsx';
-import { formatearPrecio, formatearKilometraje } from '../../../../shared/helpers/formatHelpers.js';
 import { Spinner } from '../../../../shared/components/Spinner.jsx';
 import Search from '../../../../shared/components/Search.jsx';
+import AutoCard from '../../../../shared/components/AutoCard.jsx';
 
 import { eliminarAuto } from '../../../../insfrastructure/services/autoServicio.js';
-
-// Card para mostrar cada auto
-const AutoCard = ({ auto, onEditar, onEliminar }) => {
-  const { marca, modelo, ano, precio, moneda, kilometraje, imagenes, estadoPublicacion, id, ciudad } = auto;
-
-  return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 border border-gray-100">
-      <div className="relative">
-        <img 
-          src={imagenes[0]} 
-          alt={`${marca} ${modelo}`} 
-          className="w-full h-48 object-cover"
-        />
-        <span className={`absolute top-3 right-3 text-xs font-bold px-3 py-1 rounded-full text-white shadow-md ${estadoPublicacion === 'activo' ? 'bg-green-500' : 'bg-yellow-500'}`}>
-          {estadoPublicacion.charAt(0).toUpperCase() + estadoPublicacion.slice(1)}
-        </span>
-      </div>
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-primary truncate">{marca} {modelo}</h3>
-        <p className="text-sm text-gray-600">{ano}</p>
-        <p className="text-sm text-gray-600">{ciudad}</p>
-        <div className="mt-2">
-            <p className="text-xl font-semibold text-secondary">{formatearPrecio(precio, moneda)}</p>
-            <p className="text-sm text-gray-500">{formatearKilometraje(kilometraje)}</p>
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between space-x-2">
-          <Button variant="edit" size="sm" onClick={() => onEditar(id)}>Editar</Button>
-          <Button variant="secondary" size="sm" onClick={() => onEliminar(id, marca, modelo)}>Eliminar</Button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default function AutosRegistradosPorVendedor() {
   const [autos, setAutos] = useState([]);

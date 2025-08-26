@@ -20,12 +20,32 @@ import PerfilUsuarioScreen from "../../presentation/screens/usuarios/perfil-usua
 import TodosAutosRegistrados from "../../presentation/screens/autos/todos-autos-registrados/todosAutosRegistrados.jsx";
 import DashboardHome from "../../presentation/screens/dashboard-admin/DashboardHome.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
+import Home from "../../presentation/screens/cliente/Home.jsx";
+import AutosPagina from "../../presentation/screens/cliente/AutosPagina.jsx";
+import AutoDetalle from "../../presentation/screens/cliente/AutoDetalle.jsx";
+import ReservarPruebasManejo from "../../presentation/screens/cliente/ReservarPruebasManejo.jsx";
 
 export const appConfigRoutes = [
     // Ruta principal
     {
         path: "/",
-        element: <Login/>
+        element: <Navigate to="/home" />
+    },
+    {
+        path: "/home",
+        element: <Home />
+    },
+    {
+        path: "/autos",
+        element: <AutosPagina />
+    },
+    {
+        path: "/autos/:id",
+        element: <AutoDetalle />
+    },
+    {
+        path: "/reservar-prueba-manejo/:id",
+        element: <ReservarPruebasManejo />
     },
 
     // Login y Registro
@@ -53,7 +73,7 @@ export const appConfigRoutes = [
             },
             {
                 path: "todos-los-autos",
-                element: <TodosAutosRegistrados/>
+                element: <TodosAutosRegistrados />
             },
             {
                 path: "autos-registrados-por-vendedor-logueado",

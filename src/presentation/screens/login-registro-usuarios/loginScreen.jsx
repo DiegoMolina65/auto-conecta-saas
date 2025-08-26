@@ -83,9 +83,13 @@ export default function Login() {
         exito("Login exitoso", `Bienvenido, ${userData.nombres || user.email}`);
 
         if (userData.role === "admin") {
-          navigate("/dashboard");
+          navigate("/dashboard/");
+        } else if (userData.role === "vendedor") {
+          navigate("/dashboard/autos-registrados-por-vendedor-logueado");
+        } else if (userData.role === "usuario") {
+          navigate("/home");
         } else {
-          navigate("/dashboard/autos-registrados-por-vendedor-logueado"); 
+          navigate("/home");
         }
       } else {
         error("Error de autenticación", "No se encontraron datos de usuario.");

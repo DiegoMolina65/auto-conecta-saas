@@ -60,7 +60,7 @@ export function Confirm({
       iconoFondo: "bg-red-100 text-secondary",
       titulo: "text-primary",
       mensaje: "text-gray-700",
-      btnConfirmar: "bg-secondary hover:bg-red-700 text-white",
+      btnConfirmar: "bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-red-400 text-white",
       btnCancelar: "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300",
       overlay: "bg-black bg-opacity-50"
     },

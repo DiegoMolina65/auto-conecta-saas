@@ -67,7 +67,7 @@ export class AutoEntidad {
       imagenes: this.imagenes,
       caracteristicas: this.caracteristicas,
       fechaPublicacion: this.fechaPublicacion ? this.fechaPublicacion.toISOString() : null,
-      estadoPublicacion: "activo", // estado por defecto
+      estadoPublicacion: this.estadoPublicacion,
       vendedorId: this.vendedorId,
       ciudad: this.ciudad
     };

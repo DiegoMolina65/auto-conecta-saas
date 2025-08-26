@@ -6,6 +6,11 @@ import { obtenerUsuarioPorId } from "../../../insfrastructure/services/usuarioSe
 export default function DashboardAdmin() {
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(null);
+  const [openSubMenu, setOpenSubMenu] = useState({
+    autosAdmin: true,
+    autosVendedor: true,
+    usuariosAdmin: true,
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [usuario, setUsuario] = useState(null);
 
@@ -24,6 +29,13 @@ export default function DashboardAdmin() {
 
   const toggleMenu = (menu) => {
     setOpenMenu(openMenu === menu ? null : menu);
+  };
+
+  const toggleSubMenu = (subMenu) => {
+    setOpenSubMenu((prevState) => ({
+      ...prevState,
+      [subMenu]: !prevState[subMenu],
+    }));
   };
 
   const toggleSidebar = () => {
@@ -92,47 +104,75 @@ export default function DashboardAdmin() {
                 {/* Sección Administración */}
                 {usuario && usuario.role === "admin" && (
                   <div>
-                    <h3 className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <button
+                      onClick={() => toggleSubMenu("autosAdmin")}
+                      className="w-full flex justify-between items-center py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors duration-200"
+                    >
                       Administración
-                    </h3>
-                    <button
-                      onClick={() => handleNavigation("todos-los-autos")}
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Ver todos los autos
+                      <span
+                        className={`transform transition-transform duration-200 ${
+                          openSubMenu.autosAdmin ? "rotate-180" : ""
+                        }`}
+                      >
+                        ▼
+                      </span>
                     </button>
-                    <button
-                      onClick={() =>
-                        handleNavigation("registro-auto-admin")
-                      }
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Registrar auto para vendedor
-                    </button>
+                    {openSubMenu.autosAdmin && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        <button
+                          onClick={() => handleNavigation("todos-los-autos")}
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Ver todos los autos
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleNavigation("registro-auto-admin")
+                          }
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Registrar auto para vendedor
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Sección Vendedor */}
                 <div>
-                  <h3 className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <button
+                    onClick={() => toggleSubMenu("autosVendedor")}
+                    className="w-full flex justify-between items-center py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors duration-200"
+                  >
                     Vendedor
-                  </h3>
-                  <button
-                    onClick={() => handleNavigation("registro-auto")}
-                    className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                  >
-                    Registrar un nuevo auto
+                    <span
+                      className={`transform transition-transform duration-200 ${
+                        openSubMenu.autosVendedor ? "rotate-180" : ""
+                      }`}
+                    >
+                      ▼
+                    </span>
                   </button>
-                  <button
-                    onClick={() =>
-                      handleNavigation(
-                        "autos-registrados-por-vendedor-logueado"
-                      )
-                    }
-                    className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                  >
-                    Mis autos publicados
-                  </button>
+                  {openSubMenu.autosVendedor && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      <button
+                        onClick={() => handleNavigation("registro-auto")}
+                        className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                      >
+                        Registrar un nuevo auto
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleNavigation(
+                            "autos-registrados-por-vendedor-logueado"
+                          )
+                        }
+                        className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                      >
+                        Mis autos publicados
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -162,45 +202,59 @@ export default function DashboardAdmin() {
               {openMenu === "usuarios" && !sidebarCollapsed && (
                 <div className="ml-4 mt-2 space-y-2 pl-2 border-l-2 border-gray-700">
                   <div>
-                    <h3 className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <button
+                      onClick={() => toggleSubMenu("usuariosAdmin")}
+                      className="w-full flex justify-between items-center py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors duration-200"
+                    >
                       Administración
-                    </h3>
-                    <button
-                      onClick={() =>
-                        handleNavigation("usuarios-rol-usuario")
-                      }
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Role Usuarios
+                      <span
+                        className={`transform transition-transform duration-200 ${
+                          openSubMenu.usuariosAdmin ? "rotate-180" : ""
+                        }`}
+                      >
+                        ▼
+                      </span>
                     </button>
-                    <button
-                      onClick={() =>
-                        handleNavigation("usuarios-rol-vendedor")
-                      }
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Role Vendedores
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleNavigation("todos-usuarios-registrados")
-                      }
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Ver todos los usuarios
-                    </button>
-                    <button
-                      onClick={() => handleNavigation("registro-usuario")}
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Registrar nuevo usuario
-                    </button>
-                    <button
-                      onClick={() => handleNavigation("registro-vendedor")}
-                      className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
-                    >
-                      Registrar nuevo vendedor
-                    </button>
+                    {openSubMenu.usuariosAdmin && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        <button
+                          onClick={() =>
+                            handleNavigation("usuarios-rol-usuario")
+                          }
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Role Usuarios
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleNavigation("usuarios-rol-vendedor")
+                          }
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Role Vendedores
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleNavigation("todos-usuarios-registrados")
+                          }
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Ver todos los usuarios
+                        </button>
+                        <button
+                          onClick={() => handleNavigation("registro-usuario")}
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Registrar nuevo usuario
+                        </button>
+                        <button
+                          onClick={() => handleNavigation("registro-vendedor")}
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Registrar nuevo vendedor
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

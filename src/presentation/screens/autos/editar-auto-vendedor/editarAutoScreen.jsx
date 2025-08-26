@@ -39,6 +39,7 @@ export default function EditarAutoScreen() {
     ciudad: "",
     caracteristicas: [],
     imagenes: [],
+    estadoPublicacion: "activo",
   });
 
   const [errores, setErrores] = useState({});
@@ -699,6 +700,33 @@ export default function EditarAutoScreen() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-black mb-4 flex items-center">
+              <span className="w-6 h-6 bg-gray-800 text-white rounded-full flex items-center justify-center text-sm mr-3">
+                6
+              </span>
+              Configuración de Publicación
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Estado de la Publicación
+                </label>
+                <Select
+                  value={datosFormulario.estadoPublicacion || ""}
+                  onChange={manejarCambioInput("estadoPublicacion")}
+                  options={[
+                    { value: "activo", label: "Activo" },
+                    { value: "inactivo", label: "Inactivo" },
+                  ]}
+                  placeholder="Selecciona el estado"
+                  variant="primary"
+                  size="md"
+                />
+              </div>
             </div>
           </div>
 
