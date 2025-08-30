@@ -14,7 +14,7 @@ import { subirVariasImagenes } from "../../../../insfrastructure/services/cloudi
 
 export default function RegistroAuto() {
   const navigate = useNavigate();
-  const { alerts, exito, error, cerrarAlert } = useAlert();
+  const { exito, error } = useAlert();
 
   const [datosFormulario, setDatosFormulario] = useState({
     marca: "",
@@ -739,24 +739,6 @@ export default function RegistroAuto() {
         </form>
       </div>
 
-      {/* Renderizar alerts - Corregido siguiendo el patrón de Login */}
-      <div className="fixed top-0 right-0 z-50 space-y-2 p-4">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={alert.id}
-            tipo={alert.tipo}
-            titulo={alert.titulo}
-            mensaje={alert.mensaje}
-            visible={alert.visible}
-            onCerrar={() => cerrarAlert(alert.id)}
-            accionBoton={alert.accionBoton}
-            textoBoton={alert.textoBoton}
-            autodismiss={alert.autodismiss}
-            duracion={alert.duracion}
-            style={{ transform: `translateY(${index * 10}px)` }}
-          />
-        ))}
       </div>
-    </div>
   );
 }

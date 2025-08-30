@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getAutoById } from '../../../insfrastructure/services/autoServicio.js';
+import { getActivoAutoById as getAutoById } from '../../../insfrastructure/services/autoServicio.js';
 import { NavBar } from '../../../shared/components/NavBar.jsx';
 import { Spinner } from '../../../shared/components/Spinner.jsx';
 import { Button } from '../../../shared/components/Button.jsx';
@@ -17,6 +17,9 @@ import {
   CheckCircle,
   Heart
 } from 'lucide-react';
+import { authService } from '../../../insfrastructure/services/firebase_config.js';
+import { obtenerUsuarioPorId, agregarAutoFavorito, eliminarAutoFavorito } from '../../../insfrastructure/services/usuarioServicio.js';
+import { useAlert } from '../../../shared/components/Alert.jsx';
 
 const AutoDetalle = () => {
   const { id } = useParams();
@@ -24,29 +27,64 @@ const AutoDetalle = () => {
   const [detalleAuto, setDetalleAuto] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [imagenSeleccionadaIndex, setImagenSeleccionadaIndex] = useState(0);
+  const [usuario, setUsuario] = useState(null);
+  const [esFavorito, setEsFavorito] = useState(false);
+  const { exito, error, advertencia } = useAlert();
 
   useEffect(() => {
-    const obtenerDetalleAuto = async () => {
+    const obtenerDatos = async () => {
       try {
         const datosAuto = await getAutoById(id);
         setDetalleAuto(datosAuto);
-      } catch (error) {
-        console.error("Error al obtener los detalles del auto:", error);
+
+        const usuarioActual = authService.currentUser;
+        if (usuarioActual) {
+          const datosUsuario = await obtenerUsuarioPorId(usuarioActual.uid);
+          setUsuario(datosUsuario);
+          if (datosUsuario.favoritos && datosUsuario.favoritos.includes(id)) {
+            setEsFavorito(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error al obtener los detalles:", err);
       } finally {
         setCargando(false);
       }
     };
 
-    obtenerDetalleAuto();
+    obtenerDatos();
   }, [id]);
 
   const manejarWhatsApp = () => {
     const mensaje = encodeURIComponent(`Hola, me interesa el ${detalleAuto.marca} ${detalleAuto.modelo} ${detalleAuto.ano}. ¿Podrían darme más información?`);
-    window.open(`https://wa.me/59112345678?text=${mensaje}`, '_blank');
+    window.open(`https://wa.me/59176050318?text=${mensaje}`, '_blank');
   };
 
   const manejarPruebaManejo = () => {
     navigate(`/reservar-prueba-manejo/${detalleAuto.id}`);
+  };
+
+  const manejarFavorito = async () => {
+    if (!usuario) {
+      advertencia('Debes iniciar sesión para agregar a favoritos.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      if (esFavorito) {
+        await eliminarAutoFavorito(usuario.uid, detalleAuto.id);
+        setEsFavorito(false);
+        exito('Eliminado de favoritos');
+      } else {
+        await agregarAutoFavorito(usuario.uid, detalleAuto.id);
+        setEsFavorito(true);
+        exito('Agregado a favoritos');
+      }
+    } catch (err) {
+      error('Ocurrió un error al gestionar favoritos.');
+      console.error(err);
+    }
   };
 
   if (cargando) {
@@ -229,12 +267,13 @@ const AutoDetalle = () => {
                   </Button>
                   
                   <Button 
-                    variant="outline" 
+                    onClick={manejarFavorito}
+                    variant={esFavorito ? "solid" : "outline"} 
                     size="lg"
-                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    className={esFavorito ? "bg-red-500 text-white hover:bg-red-600" : "border-red-500 text-red-500 hover:bg-red-500 hover:text-white"}
                   >
-                    <Heart className="h-4 w-4 mr-2" />
-                    Favorito
+                    <Heart className={`h-4 w-4 mr-2 ${esFavorito ? "fill-current" : ""}`} />
+                    {esFavorito ? 'En favoritos' : 'Favorito'}
                   </Button>
                 </div>
                 

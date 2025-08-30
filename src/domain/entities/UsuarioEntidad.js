@@ -8,6 +8,7 @@ export class UsuarioEntidad {
     correoElectronico,
     role,
     estadoUsuario,
+    favoritos = [],
   }) {
     this.uid = uid || null;
     this.nombres = nombres;
@@ -17,6 +18,7 @@ export class UsuarioEntidad {
     this.correoElectronico = correoElectronico;
     this.role = role;
     this.estadoUsuario = estadoUsuario;
+    this.favoritos = favoritos;
   }
 
   toFirestore() {
@@ -29,7 +31,9 @@ export class UsuarioEntidad {
       correoElectronico: this.correoElectronico,
       role: this.role,
       estadoUsuario: this.estadoUsuario,
+      favoritos: this.favoritos,
       creadoEn: new Date(),
     };
   }
 }
+

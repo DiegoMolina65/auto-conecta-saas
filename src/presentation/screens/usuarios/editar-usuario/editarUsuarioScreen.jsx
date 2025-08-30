@@ -10,7 +10,7 @@ import { Select } from '../../../../shared/components/Select.jsx';
 export default function EditarUsuario() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { alerts, exito, error: alertaError, cerrarAlert } = useAlert();
+  const { exito, error: alertaError } = useAlert();
 
   const [usuario, setUsuario] = useState(null);
   const [estaCargando, setEstaCargando] = useState(true);
@@ -300,21 +300,6 @@ export default function EditarUsuario() {
         </form>
       </div>
 
-      <div className="fixed top-0 right-0 z-50 space-y-2 p-4">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={alert.id}
-            tipo={alert.tipo}
-            titulo={alert.titulo}
-            mensaje={alert.mensaje}
-            visible={alert.visible}
-            onCerrar={() => cerrarAlert(alert.id)}
-            autodismiss={alert.autodismiss}
-            duracion={alert.duracion}
-            style={{ transform: `translateY(${index * 10}px)` }}
-          />
-        ))}
       </div>
-    </div>
   );
 }

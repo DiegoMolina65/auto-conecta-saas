@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getAutoById } from '../../../insfrastructure/services/autoServicio.js';
 import { NavBar } from '../../../shared/components/NavBar.jsx';
@@ -9,41 +9,85 @@ import { Label } from '../../../shared/components/Label.jsx';
 import { Textarea } from '../../../shared/components/Textarea.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/components/Card.jsx';
 import { Badge } from '../../../shared/components/Badge.jsx';
-import { useAlert } from '../../../shared/components/Alert.jsx';
+import { Alert, useAlert } from '../../../shared/components/Alert.jsx';
 import { formatearPrecio } from '../../../shared/helpers/formatHelpers.js';
-import { ArrowLeft, Calendar, Clock, User, Mail, Phone, MessageSquare, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Mail, Phone, MessageSquare, CheckCircle, Info } from 'lucide-react';
+import { authService } from '../../../insfrastructure/services/firebase_config.js';
+import { obtenerUsuarioPorId } from '../../../insfrastructure/services/usuarioServicio.js';
+import { crearReservaPruebaManejo, obtenerReservasPorAutoYFecha } from '../../../insfrastructure/services/reservasServicio.js';
+import ReservasPruebasManejoEntidad from '../../../domain/entities/ReservasPruebasManejoEntidad.js';
 
 const ReservarPruebasManejo = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { exito, error } = useAlert();
-  const [enviando, setEnviando] = useState(false);
+  const navegar = useNavigate();
+  const { exito, error: mostrarError, advertencia } = useAlert();
+  const [estaEnviando, setEstaEnviando] = useState(false);
   const [detalleAuto, setDetalleAuto] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  
+  const [estaCargando, setEstaCargando] = useState(true);
+  const [usuario, setUsuario] = useState(null);
+  const [usuarioHaIniciadoSesion, setUsuarioHaIniciadoSesion] = useState(false);
+  const [horariosOcupados, setHorariosOcupados] = useState([]);
+
   const [datosFormulario, setDatosFormulario] = useState({
     nombre: '',
-    email: '',
-    telefono: '',
+    correoElectronico: '',
+    numeroDeTelefono: '',
     fechaPreferida: '',
     horaPreferida: '',
     mensaje: ''
   });
 
   useEffect(() => {
-    const obtenerDetalleAuto = async () => {
+    const obtenerDatosIniciales = async () => {
       try {
         const datosAuto = await getAutoById(id);
+        if (!datosAuto) {
+          mostrarError('Vehículo no encontrado.');
+          navegar('/autos');
+          return;
+        }
         setDetalleAuto(datosAuto);
-      } catch (error) {
-        console.error("Error al obtener los detalles del auto:", error);
+
+        const usuarioActual = authService.currentUser;
+        if (usuarioActual) {
+          setUsuarioHaIniciadoSesion(true);
+          const datosUsuario = await obtenerUsuarioPorId(usuarioActual.uid);
+          setUsuario(datosUsuario);
+          setDatosFormulario(prev => ({
+            ...prev,
+            nombre: `${datosUsuario.nombres} ${datosUsuario.apellidos}`,
+            correoElectronico: datosUsuario.correoElectronico,
+            numeroDeTelefono: datosUsuario.numeroDeTelefono || ''
+          }));
+        } else {
+          setUsuarioHaIniciadoSesion(false);
+          advertencia('Necesitas iniciar sesión para realizar una reserva.');
+        }
+      } catch (err) {
+        console.error("Error al obtener datos iniciales:", err);
+        mostrarError('No se pudieron cargar los datos necesarios. Inténtalo de nuevo.');
       } finally {
-        setCargando(false);
+        setEstaCargando(false);
       }
     };
 
-    obtenerDetalleAuto();
-  }, [id]);
+    obtenerDatosIniciales();
+  }, [id, navegar, mostrarError, advertencia]);
+
+  useEffect(() => {
+    const obtenerHorarios = async () => {
+      if (datosFormulario.fechaPreferida && detalleAuto?.id) {
+        try {
+          const reservas = await obtenerReservasPorAutoYFecha(detalleAuto.id, datosFormulario.fechaPreferida);
+          setHorariosOcupados(reservas.map(r => r.hora));
+        } catch (err) {
+          console.error("Error al obtener horarios disponibles:", err);
+          mostrarError('No se pudieron verificar los horarios. Inténtalo de nuevo.');
+        }
+      }
+    };
+    obtenerHorarios();
+  }, [datosFormulario.fechaPreferida, detalleAuto?.id, mostrarError]);
 
   const manejarCambioInput = (e) => {
     const { name, value } = e.target;
@@ -53,86 +97,120 @@ const ReservarPruebasManejo = () => {
     }));
   };
 
-  const manejarEnvio = async (e) => {
+  const horariosBase = useMemo(() => [
+    '09:00', '10:00', '11:00', '12:00',
+    '14:00', '15:00', '16:00', '17:00'
+  ], []);
+
+  const horariosDisponibles = useMemo(() => {
+    if (!datosFormulario.fechaPreferida) return [];
+
+    const ahora = new Date();
+    const fechaSeleccionada = new Date(`${datosFormulario.fechaPreferida}T00:00:00`);
+    const esHoy = fechaSeleccionada.toDateString() === ahora.toDateString();
+
+    return horariosBase.filter(hora => {
+      if (horariosOcupados.includes(hora)) {
+        return false;
+      }
+      if (esHoy) {
+        const [horas, minutos] = hora.split(':').map(Number);
+        if (horas < ahora.getHours() || (horas === ahora.getHours() && minutos <= ahora.getMinutes())) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [datosFormulario.fechaPreferida, horariosOcupados, horariosBase]);
+
+  const validarFormulario = () => {
+    const { nombre, correoElectronico, numeroDeTelefono, fechaPreferida, horaPreferida } = datosFormulario;
+    if (!nombre.trim()) {
+      mostrarError('El nombre es obligatorio.');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoElectronico)) {
+      mostrarError('Por favor, introduce un correo electrónico válido.');
+      return false;
+    }
+    if (!/^\+?[0-9\s-]{7,}$/.test(numeroDeTelefono)) {
+      mostrarError('Por favor, introduce un número de teléfono válido.');
+      return false;
+    }
+    if (!fechaPreferida) {
+      mostrarError('La fecha de la reserva es obligatoria.');
+      return false;
+    }
+    if (new Date(fechaPreferida) < new Date(new Date().setHours(0, 0, 0, 0))) {
+        mostrarError('La fecha de la reserva no puede ser en el pasado.');
+        return false;
+    }
+    if (!horaPreferida) {
+      mostrarError('La hora de la reserva es obligatoria.');
+      return false;
+    }
+    return true;
+  };
+
+
+  const manejarEnvioFormulario = async (e) => {
     e.preventDefault();
-    
-    if (!datosFormulario.nombre || !datosFormulario.email || !datosFormulario.telefono || !datosFormulario.fechaPreferida || !datosFormulario.horaPreferida) {
-      error('Por favor, completa todos los campos obligatorios.');
+
+    if (!usuarioHaIniciadoSesion) {
+      mostrarError('Debes iniciar sesión para poder reservar.');
+      navegar('/login');
       return;
     }
 
-    setEnviando(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    exito('¡Reserva enviada exitosamente! Te contactaremos pronto para confirmar.');
-    
-    // Send WhatsApp message with reservation details
-    const mensaje = encodeURIComponent(
-      `🚗 Nueva reserva de prueba de manejo:\n\n` +
-      `Vehículo: ${detalleAuto.marca} ${detalleAuto.modelo} ${detalleAuto.ano}\n` +
-      `Cliente: ${datosFormulario.nombre}\n` +
-      `Email: ${datosFormulario.email}\n` +
-      `Teléfono: ${datosFormulario.telefono}\n` +
-      `Fecha preferida: ${datosFormulario.fechaPreferida}\n` +
-      `Hora preferida: ${datosFormulario.horaPreferida}\n` +
-      `Mensaje: ${datosFormulario.mensaje || 'Sin mensaje adicional'}`
-    );
-    
-    window.open(`https://wa.me/59112345678?text=${mensaje}`, '_blank');
-    
-    setEnviando(false);
-    navigate(`/autos/${detalleAuto.id}`);
+    if (!validarFormulario()) return;
+
+    if (horariosOcupados.includes(datosFormulario.horaPreferida)) {
+        mostrarError('La hora seleccionada ya no está disponible. Por favor, elige otra.');
+        return;
+    }
+
+    setEstaEnviando(true);
+    try {
+      const nuevaReserva = new ReservasPruebasManejoEntidad(
+        null, 
+        detalleAuto.id,
+        usuario.uid,
+        datosFormulario.fechaPreferida,
+        datosFormulario.horaPreferida,
+        'activo',
+        datosFormulario.mensaje,
+        datosFormulario.nombre,
+        datosFormulario.correoElectronico,
+        datosFormulario.numeroDeTelefono,
+        `${detalleAuto.marca} ${detalleAuto.modelo} ${detalleAuto.ano}`
+      );
+
+      await crearReservaPruebaManejo(nuevaReserva);
+      exito('¡Reserva enviada exitosamente! Te contactaremos pronto para confirmar.');
+      setTimeout(() => navegar(`/autos/${detalleAuto.id}`), 2000);
+    } catch (err) {
+      console.error("Error al crear la reserva:", err);
+      mostrarError('Hubo un problema al enviar tu reserva. Por favor, inténtalo de nuevo.');
+    } finally {
+      setEstaEnviando(false);
+    }
   };
 
-  // Get today's date for min date
   const hoy = new Date().toISOString().split('T')[0];
 
-  // Available time slots
-  const horariosDisponibles = [
-    '09:00', '10:00', '11:00', '12:00',
-    '14:00', '15:00', '16:00', '17:00'
-  ];
-
-  if (cargando) {
-    return <Spinner fullScreen />;
-  }
-
-  if (!detalleAuto) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <NavBar />
-        <div className="pt-20 flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Vehículo no encontrado</h2>
-            <Button onClick={() => navigate('/autos')}> 
-              Volver a la búsqueda
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (estaCargando) return <Spinner fullScreen />;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <NavBar />
-      
       <div className="pt-20 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
-          {/* Back Button */}
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(`/autos/${detalleAuto.id}`)}
-            className="mb-8"
-          >
+          <Button variant="outline" onClick={() => navegar(-1)} className="mb-8">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al vehículo
+            Volver
           </Button>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {/* Car Summary */}
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -193,7 +271,6 @@ const ReservarPruebasManejo = () => {
               </CardContent>
             </Card>
 
-            {/* Reservation Form */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -201,13 +278,19 @@ const ReservarPruebasManejo = () => {
                   Datos de Reserva
                 </CardTitle>
                 <p className="text-sm text-gray-500">
-                  Completa el formulario y te contactaremos para confirmar tu cita.
+                  Completa el formulario para agendar tu prueba de manejo.
                 </p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={manejarEnvio} className="space-y-6">
-                  {/* Personal Information */}
-                  <div className="space-y-4">
+                {!usuarioHaIniciadoSesion && (
+                  <Alert variant="warning" className="mb-6">
+                    <Info className="h-4 w-4" />
+                    <p>Debes <a href="/login" className="font-bold underline">iniciar sesión</a> o <a href="/registro" className="font-bold underline">registrarte</a> para poder reservar.</p>
+                  </Alert>
+                )}
+                <form onSubmit={manejarEnvioFormulario} className="space-y-6">
+                  <fieldset disabled={!usuarioHaIniciadoSesion || estaEnviando} className="space-y-6">
+                    <div className="space-y-4">
                     <div>
                       <Label htmlFor="nombre" className="text-sm font-medium">
                         Nombre Completo *
@@ -228,17 +311,17 @@ const ReservarPruebasManejo = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="email" className="text-sm font-medium">
+                      <Label htmlFor="correoElectronico" className="text-sm font-medium">
                         Correo Electrónico *
                       </Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                         <Input
-                          id="email"
-                          name="email"
+                          id="correoElectronico"
+                          name="correoElectronico"
                           type="email"
                           required
-                          value={datosFormulario.email}
+                          value={datosFormulario.correoElectronico}
                           onChange={manejarCambioInput}
                           placeholder="tu@email.com"
                           className="pl-10"
@@ -247,71 +330,45 @@ const ReservarPruebasManejo = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="telefono" className="text-sm font-medium">
+                      <Label htmlFor="numeroDeTelefono" className="text-sm font-medium">
                         Teléfono *
                       </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                         <Input
-                          id="telefono"
-                          name="telefono"
+                          id="numeroDeTelefono"
+                          name="numeroDeTelefono"
                           type="tel"
                           required
-                          value={datosFormulario.telefono}
+                          value={datosFormulario.numeroDeTelefono}
                           onChange={manejarCambioInput}
-                          placeholder="+591 12345678"
+                          placeholder="+591 76050318"
                           className="pl-10"
                         />
                       </div>
                     </div>
                   </div>
-
-                  {/* Date and Time */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="fechaPreferida" className="text-sm font-medium">
-                        Fecha Preferida *
-                      </Label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                          id="fechaPreferida"
-                          name="fechaPreferida"
-                          type="date"
-                          required
-                          min={hoy}
-                          value={datosFormulario.fechaPreferida}
-                          onChange={manejarCambioInput}
-                          className="pl-10"
-                        />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="fechaPreferida">Fecha Preferida *</Label>
+                        <Input id="fechaPreferida" name="fechaPreferida" type="date" required min={hoy} value={datosFormulario.fechaPreferida} onChange={manejarCambioInput} />
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="horaPreferida" className="text-sm font-medium">
-                        Hora Preferida *
-                      </Label>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <select
-                          id="horaPreferida"
-                          name="horaPreferida"
-                          required
-                          value={datosFormulario.horaPreferida}
-                          onChange={manejarCambioInput}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
+                      <div>
+                        <Label htmlFor="horaPreferida">Hora Preferida *</Label>
+                        <select id="horaPreferida" name="horaPreferida" required value={datosFormulario.horaPreferida} onChange={manejarCambioInput} disabled={!datosFormulario.fechaPreferida || horariosDisponibles.length === 0} className="w-full p-2 border rounded-md bg-white">
                           <option value="">Seleccionar hora</option>
                           {horariosDisponibles.map(hora => (
                             <option key={hora} value={hora}>{hora}</option>
                           ))}
+                          {datosFormulario.fechaPreferida && horariosDisponibles.length === 0 && (
+                            <option disabled>No hay horarios disponibles</option>
+                          )}
                         </select>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Message */}
-                  <div>
+                    <div>
                     <Label htmlFor="mensaje" className="text-sm font-medium">
                       Mensaje Adicional
                     </Label>
@@ -327,30 +384,10 @@ const ReservarPruebasManejo = () => {
                       />
                     </div>
                   </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={enviando}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {enviando ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Enviando reserva...
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Confirmar Reserva
-                      </>
-                    )}
+                  </fieldset>
+                  <Button type="submit" size="lg" disabled={!usuarioHaIniciadoSesion || estaEnviando} className="w-full">
+                    {estaEnviando ? <Spinner size="sm" /> : 'Confirmar Reserva'}
                   </Button>
-
-                  <p className="text-xs text-gray-500 text-center">
-                    Al enviar esta reserva, aceptas que te contactemos para confirmar los detalles de tu prueba de manejo.
-                  </p>
                 </form>
               </CardContent>
             </Card>

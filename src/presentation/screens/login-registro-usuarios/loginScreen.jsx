@@ -21,7 +21,7 @@ export default function Login() {
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
   
   // Hook de alerts
-  const { alerts, exito, error, advertencia, informacion, cerrarAlert } = useAlert();
+  const { exito, error, advertencia, informacion } = useAlert();
 
   const manejarCambioInput = (campo) => (evento) => {
     setDatosFormulario(anterior => ({
@@ -218,25 +218,6 @@ export default function Login() {
         <p className="text-center text-sm text-gray-500 mt-6">
           Al iniciar sesión, aceptas nuestros términos y condiciones
         </p>
-      </div>
-
-      {/* Renderizar alerts */}
-      <div className="fixed top-0 right-0 z-50 space-y-2 p-4">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={alert.id}
-            tipo={alert.tipo}
-            titulo={alert.titulo}
-            mensaje={alert.mensaje}
-            visible={alert.visible}
-            onCerrar={() => cerrarAlert(alert.id)}
-            accionBoton={alert.accionBoton}
-            textoBoton={alert.textoBoton}
-            autodismiss={alert.autodismiss}
-            duracion={alert.duracion}
-            style={{ transform: `translateY(${index * 10}px)` }}
-          />
-        ))}
       </div>
     </div>
   );

@@ -144,7 +144,7 @@ export default function MostrarUsuariosRoleVendedor() {
 
       {/* Renderizar alerts */}
       <div className="fixed top-0 right-0 z-40 space-y-2 p-4">
-        {alerts.map((alert, index) => (
+        {alerts?.map((alert, index) => (
           <Alert
             key={alert.id}
             tipo={alert.tipo}

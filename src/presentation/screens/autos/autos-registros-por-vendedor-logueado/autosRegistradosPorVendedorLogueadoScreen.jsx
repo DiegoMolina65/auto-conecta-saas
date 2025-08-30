@@ -22,7 +22,7 @@ export default function AutosRegistradosPorVendedorLogueado() {
   const navigate = useNavigate();
 
   // Hook para alertas
-  const { alerts, exito, error: alertaError, advertencia, informacion, cerrarAlert } = useAlert();
+  const { exito, error: alertaError, advertencia, informacion } = useAlert();
 
   // Hook para confirmaciones
   const { ConfirmComponent, mostrarConfirm } = useConfirm();
@@ -176,25 +176,6 @@ export default function AutosRegistradosPorVendedorLogueado() {
         </div>
 
         {renderContent()}
-      </div>
-
-      {/* Renderizar alerts */}
-      <div className="fixed top-0 right-0 z-40 space-y-2 p-4">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={alert.id}
-            tipo={alert.tipo}
-            titulo={alert.titulo}
-            mensaje={alert.mensaje}
-            visible={alert.visible}
-            onCerrar={() => cerrarAlert(alert.id)}
-            accionBoton={alert.accionBoton}
-            textoBoton={alert.textoBoton}
-            autodismiss={alert.autodismiss}
-            duracion={alert.duracion}
-            style={{ transform: `translateY(${index * 10}px)` }}
-          />
-        ))}
       </div>
 
       {/* Renderizar modal de confirmación */}

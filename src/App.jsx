@@ -1,6 +1,7 @@
 import React from "react";
-import  { BrowserRouter, useRoutes } from "react-router-dom";
+import { BrowserRouter, useRoutes } from "react-router-dom";
 import { appConfigRoutes } from "./config/routes/appConfigRoutes.jsx";
+import { AlertProvider } from "./shared/components/Alert.jsx";
 
 function AppRoutes() {
   return useRoutes(appConfigRoutes);
@@ -9,7 +10,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-     <AppRoutes/>
+      <AlertProvider>
+        <AppRoutes />
+      </AlertProvider>
     </BrowserRouter>
   );
 }

@@ -10,6 +10,8 @@ export default function DashboardAdmin() {
     autosAdmin: true,
     autosVendedor: true,
     usuariosAdmin: true,
+    reservasAdmin: true,
+    reservasVendedor: true,
   });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [usuario, setUsuario] = useState(null);
@@ -260,6 +262,99 @@ export default function DashboardAdmin() {
               )}
             </div>
           )}
+
+          {/* Reservas Menu */}
+          <div>
+            <button
+              onClick={() => toggleMenu("reservas")}
+              className="w-full flex justify-between items-center py-3 px-3 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-green-600 hover:to-green-500 hover:text-white transition-all duration-200 group"
+            >
+              <div className="flex items-center">
+                <span className="text-xl mr-3">📅</span>
+                {!sidebarCollapsed && <span>Gestión de Reservas</span>}
+              </div>
+              {!sidebarCollapsed && (
+                <span
+                  className={`transform transition-transform duration-200 ${
+                    openMenu === "reservas" ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              )}
+            </button>
+            {openMenu === "reservas" && !sidebarCollapsed && (
+              <div className="ml-4 mt-2 space-y-2 pl-2 border-l-2 border-gray-700">
+                {/* Sección Administración */}
+                {usuario && usuario.role === "admin" && (
+                  <div>
+                    <button
+                      onClick={() => toggleSubMenu("reservasAdmin")}
+                      className="w-full flex justify-between items-center py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors duration-200"
+                    >
+                      Administración
+                      <span
+                        className={`transform transition-transform duration-200 ${
+                          openSubMenu.reservasAdmin ? "rotate-180" : ""
+                        }`}
+                      >
+                        ▼
+                      </span>
+                    </button>
+                    {openSubMenu.reservasAdmin && (
+                      <div className="ml-4 mt-1 space-y-1">
+                        <button
+                          onClick={() => handleNavigation("reservas/todas")}
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Ver todas las reservas
+                        </button>
+                        <button
+                          onClick={() => handleNavigation("reservas/crear")}
+                          className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                        >
+                          Crear nueva reserva
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Sección Vendedor */}
+                <div>
+                  <button
+                    onClick={() => toggleSubMenu("reservasVendedor")}
+                    className="w-full flex justify-between items-center py-2 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-white transition-colors duration-200"
+                  >
+                    Vendedor
+                    <span
+                      className={`transform transition-transform duration-200 ${
+                        openSubMenu.reservasVendedor ? "rotate-180" : ""
+                      }`}
+                    >
+                      ▼
+                    </span>
+                  </button>
+                  {openSubMenu.reservasVendedor && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      <button
+                        onClick={() => handleNavigation("reservas/vendedor")}
+                        className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                      >
+                        Ver reservas de mis autos
+                      </button>
+                      <button
+                        onClick={() => handleNavigation("reservas/crear")}
+                        className="w-full text-left py-2 px-4 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-all duration-150"
+                      >
+                        Crear nueva reserva
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* User Info */}

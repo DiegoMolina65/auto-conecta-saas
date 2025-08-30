@@ -1,4 +1,4 @@
-import { collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, query, orderBy, limit, where } from "firebase/firestore";
 import { databaseFirestore } from "./firebase_config.js";
 
 // Crear un nuevo auto
@@ -55,6 +55,19 @@ export async function obtenerAutosRecientes(limite = 5) {
     }
 }
 
+// Obtener autos por ID de vendedor
+export async function obtenerAutosPorVendedorId(idVendedor) {
+  try {
+    const autosCollection = collection(databaseFirestore, 'autos');
+    const q = query(autosCollection, where("vendedorId", "==", idVendedor));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error obteniendo autos por ID de vendedor:", error);
+    throw error;
+  }
+}
+
 
 // Editar un auto existente
 export async function editarAuto(idAuto, datosActualizados) {
@@ -78,4 +91,64 @@ export async function eliminarAuto(idAuto) {
     console.error(`Error eliminando auto con ID ${idAuto}:`, error);
     throw error;
   }
+}
+
+// Obtener autos por IDs
+export async function obtenerAutosPorIds(ids) {
+  if (!ids || ids.length === 0) {
+    return [];
+  }
+  const autosRef = collection(databaseFirestore, "autos");
+  const q = query(autosRef, where("__name__", "in", ids));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// --- Funciones para Clientes (solo autos activos) ---
+
+export async function obtenerTodosLosAutosActivos() {
+    try {
+        const autosCollection = collection(databaseFirestore, 'autos');
+        const q = query(autosCollection, where("estadoPublicacion", "==", "activo"));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error obteniendo todos los autos activos:", error);
+        throw error;
+    }
+}
+
+export async function getActivoAutoById(idAuto) {
+  try {
+    const auto = await getAutoById(idAuto);
+    if (auto && auto.estadoPublicacion === 'activo') {
+      return auto;
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error obteniendo auto activo con ID ${idAuto}:`, error);
+    throw error;
+  }
+}
+
+export async function obtenerAutosRecientesActivos(limite = 5) {
+    try {
+        const autosCollection = collection(databaseFirestore, 'autos');
+        const q = query(autosCollection, where("estadoPublicacion", "==", "activo"), limit(limite));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error("Error obteniendo autos recientes activos:", error);
+        throw error;
+    }
+}
+
+export async function obtenerAutosActivosPorIds(ids) {
+  if (!ids || ids.length === 0) {
+    return [];
+  }
+  const autosRef = collection(databaseFirestore, "autos");
+  const q = query(autosRef, where("__name__", "in", ids), where("estadoPublicacion", "==", "activo"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }

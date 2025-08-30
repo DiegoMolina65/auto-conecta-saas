@@ -24,6 +24,17 @@ import Home from "../../presentation/screens/cliente/Home.jsx";
 import AutosPagina from "../../presentation/screens/cliente/AutosPagina.jsx";
 import AutoDetalle from "../../presentation/screens/cliente/AutoDetalle.jsx";
 import ReservarPruebasManejo from "../../presentation/screens/cliente/ReservarPruebasManejo.jsx";
+import FavoritosScreen from "../../presentation/screens/cliente/FavoritosScreen.jsx";
+import MisReservasScreen from "../../presentation/screens/cliente/MisReservasScreen.jsx";
+import PerfilClienteScreen from "../../presentation/screens/cliente/PerfilClienteScreen.jsx";
+
+
+import TodasLasReservasScreen from '../../presentation/screens/reservas/TodasLasReservasScreen.jsx';
+import CrearReservaScreen from '../../presentation/screens/reservas/CrearReservaScreen.jsx';
+import EditarReservaScreen from '../../presentation/screens/reservas/EditarReservaScreen.jsx';
+import ReservasPorVendedorScreen from '../../presentation/screens/reservas/ReservasPorVendedorScreen.jsx';
+import ReprogramarReservaScreen from '../../presentation/screens/reservas/ReprogramarReservaScreen.jsx';
+
 
 export const appConfigRoutes = [
     // Ruta principal
@@ -46,6 +57,18 @@ export const appConfigRoutes = [
     {
         path: "/reservar-prueba-manejo/:id",
         element: <ReservarPruebasManejo />
+    },
+    {
+        path: "/favoritos",
+        element: <ProtectedRoute><FavoritosScreen /></ProtectedRoute>
+    },
+    {
+        path: "/mis-reservas",
+        element: <ProtectedRoute><MisReservasScreen /></ProtectedRoute>
+    },
+    {
+        path: "/perfil-cliente",
+        element: <ProtectedRoute><PerfilClienteScreen /></ProtectedRoute>
     },
 
     // Login y Registro
@@ -122,6 +145,27 @@ export const appConfigRoutes = [
             {
                 path: "registro-vendedor",
                 element: <RegistroVendedores/>
+            },
+            // Rutas de gestión de reservas
+            {
+                path: "reservas/todas",
+                element: <TodasLasReservasScreen />
+            },
+            {
+                path: "reservas/crear",
+                element: <CrearReservaScreen />
+            },
+            {
+                path: "reservas/editar/:id",
+                element: <EditarReservaScreen />
+            },
+            {
+                path: "reservas/vendedor",
+                element: <ReservasPorVendedorScreen />
+            },
+            {
+                path: "reservas/vendedor/reprogramar/:id",
+                element: <ReprogramarReservaScreen />
             },
         ]
     },

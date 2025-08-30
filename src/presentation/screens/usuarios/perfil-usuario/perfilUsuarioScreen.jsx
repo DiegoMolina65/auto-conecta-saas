@@ -58,7 +58,7 @@ const LogoutIcon = ({ className = "w-5 h-5" }) => (
 export default function PerfilUsuarioScreen() {
   const [usuario, setUsuario] = useState(null);
   const [estaCargando, setEstaCargando] = useState(true);
-  const { alerts, error: alertaError, success: alertaSuccess, cerrarAlert } = useAlert();
+  const { error: alertaError, exito: alertaSuccess } = useAlert();
   const [hoveredCard, setHoveredCard] = useState(null);
   const navigate = useNavigate();
 
@@ -267,40 +267,6 @@ export default function PerfilUsuarioScreen() {
         </div>
       </div>
 
-      {/* Renderizar alerts con posición mejorada */}
-      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
-        {alerts.map((alert, index) => (
-          <Alert
-            key={alert.id}
-            tipo={alert.tipo}
-            titulo={alert.titulo}
-            mensaje={alert.mensaje}
-            visible={alert.visible}
-            onCerrar={() => cerrarAlert(alert.id)}
-            accionBoton={alert.accionBoton}
-            textoBoton={alert.textoBoton}
-            autodismiss={alert.autodismiss}
-            duracion={alert.duracion}
-            style={{ 
-              transform: `translateY(${index * 10}px)`,
-              animation: 'slideInRight 0.3s ease-out'
-            }}
-          />
-        ))}
       </div>
-
-      <style>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-    </div>
   );
 }

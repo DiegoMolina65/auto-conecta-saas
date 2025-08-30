@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { NavBar } from '../../../shared/components/NavBar.jsx';
 import AutoCard from '../../../shared/components/AutoCard.jsx';
-import { obtenerTodosLosAutos } from '../../../insfrastructure/services/autoServicio.js';
+import { obtenerTodosLosAutosActivos as obtenerTodosLosAutos } from '../../../insfrastructure/services/autoServicio.js';
 import { Button } from '../../../shared/components/Button.jsx';
 import { Input } from '../../../shared/components/Input.jsx';
 import { Select } from '../../../shared/components/Select.jsx';
@@ -21,7 +21,8 @@ const AutosPagina = () => {
     const obtenerAutos = async () => {
       try {
         const todosLosAutos = await obtenerTodosLosAutos();
-        setAutos(todosLosAutos);
+        const sortedAutos = todosLosAutos.sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+        setAutos(sortedAutos);
       } catch (error) {
         console.error("Error al obtener los autos:", error);
       }

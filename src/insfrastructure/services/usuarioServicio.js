@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, doc, deleteDoc, updateDoc, getDoc, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, deleteDoc, updateDoc, getDoc, orderBy, limit, arrayUnion, arrayRemove } from "firebase/firestore";
 import { databaseFirestore } from "./firebase_config.js";
 
 
@@ -59,4 +59,20 @@ export async function obtenerUsuariosRecientes(limite = 5) {
         console.error("Error obteniendo usuarios recientes:", error);
         throw error;
     }
+}
+
+// Agregar un auto a favoritos
+export async function agregarAutoFavorito(uid, idAuto) {
+  const usuarioRef = doc(databaseFirestore, "usuarios", uid);
+  await updateDoc(usuarioRef, {
+    favoritos: arrayUnion(idAuto)
+  });
+}
+
+// Eliminar un auto de favoritos
+export async function eliminarAutoFavorito(uid, idAuto) {
+  const usuarioRef = doc(databaseFirestore, "usuarios", uid);
+  await updateDoc(usuarioRef, {
+    favoritos: arrayRemove(idAuto)
+  });
 }

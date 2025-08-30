@@ -4,7 +4,7 @@ import { Button } from '../../../shared/components/Button.jsx';
 import { Badge } from '../../../shared/components/Badge.jsx';
 import { NavBar } from '../../../shared/components/NavBar.jsx';
 import AutoCard from '../../../shared/components/AutoCard.jsx';
-import { obtenerTodosLosAutos } from '../../../insfrastructure/services/autoServicio.js';
+import { obtenerAutosRecientesActivos } from '../../../insfrastructure/services/autoServicio.js';
 import { ArrowRight, Star, Shield, Award, Phone } from 'lucide-react';
 
 const Home = () => {
@@ -14,8 +14,9 @@ const Home = () => {
   useEffect(() => {
     const obtenerAutos = async () => {
       try {
-        const todosLosAutos = await obtenerTodosLosAutos();
-        setAutosDestacados(todosLosAutos.slice(0, 3));
+        const todosLosAutos = await obtenerAutosRecientesActivos(3);
+        const sortedAutos = todosLosAutos.sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+        setAutosDestacados(sortedAutos);
       } catch (error) {
         console.error("Error al cargar los autos:", error);
       }
@@ -57,7 +58,7 @@ const Home = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
-              onClick={() => navigate('/dashboard/todos-los-autos')}
+              onClick={() => navigate('/autos')}
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-3"
             >

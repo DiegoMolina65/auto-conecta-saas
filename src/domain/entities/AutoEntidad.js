@@ -42,7 +42,7 @@ export class AutoEntidad {
     this.imagenes = imagenes;
     this.caracteristicas = caracteristicas;
     this.fechaPublicacion = fechaPublicacion ? new Date(fechaPublicacion) : null;
-    this.estadoPublicacion = estadoPublicacion;
+    this.estadoPublicacion = estadoPublicacion || 'activo';
     this.vendedorId = vendedorId;
     this.ciudad = ciudad;
   }
